@@ -8,6 +8,7 @@ namespace loo {
 #else
 #define LOO_EXPORT
 #endif
+
 }  // namespace loo
 
 #endif /* LOO_LOO_PREDEFS_HPP */

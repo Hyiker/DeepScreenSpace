@@ -40,7 +40,7 @@ void ShadowMap::render(const Scene& scene, glm::vec3 sunPosition) {
     m_shader.setUniform("uModel", scene.getModelMatrix());
     m_shader.setUniform("uLightTransform", getLightSpaceTransform(sunPosition));
     scene.draw(m_shader);
-    checkError();
+    logPossibleGLError();
     glCullFace(GL_BACK);
 
     m_framebuffer.unbind();

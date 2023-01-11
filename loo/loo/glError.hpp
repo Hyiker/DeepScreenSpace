@@ -8,16 +8,21 @@
 
 #ifndef LOO_LOO_GL_ERROR_HPP
 #define LOO_LOO_GL_ERROR_HPP
+#include <glad/glad.h>
+#include <glog/logging.h>
+
+#include <iostream>
+
 #include "predefs.hpp"
+
 namespace loo {
 
-#define checkError() glCheckError(__FILE__, __LINE__)
+#define logPossibleGLError()                                     \
+    if (glGetError() != GL_NO_ERROR) {                           \
+        LOG(ERROR) << errCode2String(glGetError()) << std::endl; \
+    }
 
-// Ask Opengl for errors:
-// Result is printed on the standard output
-// usage :
-//      glCheckError(__FILE__,__LINE__);
-LOO_EXPORT void glCheckError(const char* file, unsigned int line);
+LOO_EXPORT const char* errCode2String(GLenum err);
 
 }  // namespace loo
 

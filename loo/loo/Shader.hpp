@@ -8,6 +8,7 @@
 #ifndef LOO_LOO_SHADER_HPP
 #define LOO_LOO_SHADER_HPP
 
+#include <exception>
 #define GLM_FORCE_RADIANS
 #include <glad/glad.h>
 
@@ -21,14 +22,13 @@
 
 namespace loo {
 
-class Shader;
-class ShaderProgram;
-
 // Loads a shader from a file into OpenGL.
 class LOO_EXPORT Shader {
    public:
     // Load Shader from a file
-    Shader(const std::string& filename, GLenum type);
+    Shader(const char* shaderContent, GLenum type);
+    Shader(Shader&) = delete;
+    Shader(Shader&& other);
 
     // provide opengl shader identifiant.
     GLuint getHandle() const;
@@ -41,6 +41,9 @@ class LOO_EXPORT Shader {
 
     friend class ShaderProgram;
 };
+
+LOO_EXPORT Shader createShaderFromFile(const std::string& filename,
+                                       GLenum type);
 
 // A shader program is a set of shader (for instance vertex shader + pixel
 // shader) defining the rendering pipeline.
@@ -62,12 +65,12 @@ class LOO_EXPORT ShaderProgram {
     GLuint getHandle() const;
 
     // clang-format off
-  // provide attributes informations.
-  GLint attribute(const std::string& name);
-  void setAttribute(const std::string& name, GLint size, GLsizei stride, GLuint offset, GLboolean normalize, GLenum type);
-  void setAttribute(const std::string& name, GLint size, GLsizei stride, GLuint offset, GLboolean normalize);
-  void setAttribute(const std::string& name, GLint size, GLsizei stride, GLuint offset, GLenum type); 
-  void setAttribute(const std::string& name, GLint size, GLsizei stride, GLuint offset);
+    // provide attributes informations.
+    GLint attribute(const std::string& name);
+    void setAttribute(const std::string& name, GLint size, GLsizei stride, GLuint offset, GLboolean normalize, GLenum type);
+    void setAttribute(const std::string& name, GLint size, GLsizei stride, GLuint offset, GLboolean normalize);
+    void setAttribute(const std::string& name, GLint size, GLsizei stride, GLuint offset, GLenum type); 
+    void setAttribute(const std::string& name, GLint size, GLsizei stride, GLuint offset);
     // clang-format on
 
     // provide uniform location
@@ -103,6 +106,11 @@ class LOO_EXPORT ShaderProgram {
     GLuint handle;
 
     void link();
+};
+
+class ShaderCompileException : public std::exception {
+   public:
+    using std::exception::exception;
 };
 }  // namespace loo
 

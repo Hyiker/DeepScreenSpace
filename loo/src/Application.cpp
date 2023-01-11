@@ -16,6 +16,7 @@
 #include <iostream>
 #include <stdexcept>
 
+#include "glog/logging.h"
 #include "loo/glError.hpp"
 
 namespace loo {
@@ -24,7 +25,6 @@ using namespace std;
 
 Application::Application(int width, int height)
     : state(stateReady), width(width), height(height), title("Application") {
-    cout << "[Info] GLFW initialisation" << endl;
     initGLFW();
     // glad load
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -33,9 +33,9 @@ Application::Application(int width, int height)
     initImGUI();
 
     // opengl configuration
-    glEnable(GL_DEPTH_TEST);  // enable depth-testing
-    glDepthFunc(
-        GL_LESS);  // depth-testing interprets a smaller value as "closer"
+    // glEnable(GL_DEPTH_TEST);  // enable depth-testing
+    // glDepthFunc(
+    //     GL_LESS);  // depth-testing interprets a smaller value as "closer"
 
     // uncomment to disable vsync
     // glfwSwapInterval(false);
@@ -57,7 +57,7 @@ void Application::run() {
 
     time = glfwGetTime();
 
-    while (state == stateRun) {
+    while (state == stateRun && !glfwWindowShouldClose(window)) {
         // compute new time and delta time
         float t = glfwGetTime();
         deltaTime = t - time;
@@ -68,10 +68,10 @@ void Application::run() {
         ImGui::NewFrame();
 
         // detech window related changes
-        detectWindowDimensionChange();
+        // detectWindowDimensionChange();
 
         // execute the frame code
-        loop();
+        this->loop();
 
         // Rendering
         ImGui::Render();
@@ -83,10 +83,12 @@ void Application::run() {
         // Pool and process events
         glfwPollEvents();
     }
+    LOG(INFO) << "Cleaning up" << endl;
     // Cleanup
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
+    logPossibleGLError();
 
     glfwDestroyWindow(window);
     glfwTerminate();
@@ -131,8 +133,9 @@ float Application::getWindowRatio() { return float(width) / float(height); }
 bool Application::windowDimensionChanged() { return dimensionChanged; }
 void Application::initGLFW() {
     // initialize the GLFW library
+    LOG(INFO) << "Initializing GLFW..." << endl;
     if (!glfwInit()) {
-        throw std::runtime_error("Couldn't init GLFW");
+        LOG(FATAL) << "Couldn't init GLFW" << endl;
     }
 
     // setting the opengl version
@@ -149,17 +152,18 @@ void Application::initGLFW() {
     window = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);
     if (!window) {
         glfwTerminate();
-        throw std::runtime_error("Couldn't create a window");
+        LOG(FATAL) << "Couldn't create GLFW window" << endl;
     }
 
     glfwMakeContextCurrent(window);
 }
 void Application::initImGUI() {
     // ImGui setup
+    LOG(INFO) << "Initializing Dear ImGUI..." << endl;
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
-    glCheckError(__FILE__, __LINE__);
+    logPossibleGLError();
 
     ImGui::StyleColorsDark();
 

@@ -8,8 +8,10 @@
 
 #ifndef LOO_LOO_APPLICATION_HPP
 #define LOO_LOO_APPLICATION_HPP
+
 #include <string>
 
+#include "Shader.hpp"
 #include "predefs.hpp"
 
 struct GLFWwindow;
@@ -63,8 +65,6 @@ class LOO_EXPORT Application {
 
     State state;
 
-    Application& operator=(const Application&) { return *this; }
-
     GLFWwindow* window;
 
     // Time:
@@ -78,15 +78,15 @@ class LOO_EXPORT Application {
     void detectWindowDimensionChange();
 
    protected:
-    Application(const Application&){};
-
     std::string title;
 
     virtual void loop();
+    void initImGUI();
 
    private:
     void initGLFW();
-    void initImGUI();
+
+    GLuint VAO;
 };
 }  // namespace loo
 

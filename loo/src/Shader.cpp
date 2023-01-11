@@ -8,13 +8,17 @@
 
 #include "loo/Shader.hpp"
 
+#include <glog/logging.h>
+
 #include <cstdlib>
+#include <format>
 #include <fstream>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 #include <stdexcept>
 #include <utility>
 #include <vector>
+
 namespace loo {
 
 using namespace std;
@@ -37,20 +41,20 @@ void getFileContents(const char* filename, vector<char>& buffer) {
                                     " doesn't exists");
     }
 }
+Shader::Shader(Shader&& other) {
+    this->handle = other.getHandle();
+    other.handle = GL_INVALID_INDEX;
+}
 
-Shader::Shader(const std::string& filename, GLenum type) {
-    // file loading
-    vector<char> fileContent;
-    getFileContents(filename.c_str(), fileContent);
-
+Shader::Shader(const char* shaderContent, GLenum type) {
     // creation
     handle = glCreateShader(type);
     if (handle == 0)
         throw std::runtime_error("[Error] Impossible to create a new Shader");
 
     // code source assignation
-    const char* shaderText(&fileContent[0]);
-    glShaderSource(handle, 1, (const GLchar**)&shaderText, NULL);
+    const char* shaderText(shaderContent);
+    glShaderSource(handle, 1, (const GLchar**)&shaderText, nullptr);
 
     // compilation
     glCompileShader(handle);
@@ -64,20 +68,29 @@ Shader::Shader(const std::string& filename, GLenum type) {
 
         char* log = new char[logsize + 1];
         glGetShaderInfoLog(handle, logsize, &logsize, log);
-
-        cout << "[Error] compilation error: " << filename << endl;
-        cout << log << endl;
-
-        exit(EXIT_FAILURE);
-    } else {
-        cout << "[Info] Shader " << filename << " compiled successfully"
-             << endl;
+        LOG(ERROR) << log << endl;
+        throw ShaderCompileException(log);
     }
 }
 
 GLuint Shader::getHandle() const { return handle; }
 
-Shader::~Shader() {}
+Shader::~Shader() {
+    if (handle != GL_INVALID_INDEX) glDeleteShader(handle);
+}
+
+Shader createShaderFromFile(const std::string& filename, GLenum type) {
+    // file loading
+    vector<char> fileContent;
+    getFileContents(filename.c_str(), fileContent);
+
+    try {
+        Shader shader(fileContent.data(), type);
+        return std::move(shader);
+    } catch (ShaderCompileException& e) {
+        LOG(FATAL) << format("Compile error: {}", e.what()) << endl;
+    }
+}
 
 ShaderProgram::ShaderProgram() {
     handle = glCreateProgram();
@@ -224,9 +237,7 @@ void ShaderProgram::setTexture(const std::string& name, int index,
     setTexture(name, index, tex.getId(), tex.getType());
 }
 
-ShaderProgram::~ShaderProgram() {
-    // glDeleteProgram(handle);
-}
+ShaderProgram::~ShaderProgram() { glDeleteProgram(handle); }
 
 void ShaderProgram::use() const { glUseProgram(handle); }
 void ShaderProgram::unuse() const { glUseProgram(0); }

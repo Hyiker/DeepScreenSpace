@@ -2,7 +2,9 @@
 #define LOO_LOO_TEXTURE_HPP
 #include <glad/glad.h>
 
+#include <memory>
 #include <string>
+#include <unordered_map>
 
 #include "predefs.hpp"
 
@@ -68,5 +70,9 @@ class LOO_EXPORT Texture {
         unbind();
     }
 };
+
+LOO_EXPORT std::shared_ptr<Texture> createTextureFromFile(
+    std::unordered_map<std::string, std::shared_ptr<Texture>>& uniqueTexture,
+    const std::string& filename);
 }  // namespace loo
 #endif /* LOO_LOO_TEXTURE_HPP */
