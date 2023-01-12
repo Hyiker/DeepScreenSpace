@@ -85,13 +85,7 @@ void Application::run() {
     }
     LOG(INFO) << "Cleaning up" << endl;
     // Cleanup
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
-    logPossibleGLError();
-
-    glfwDestroyWindow(window);
-    glfwTerminate();
+    cleanup();
 }
 
 void Application::detectWindowDimensionChange() {
@@ -106,6 +100,16 @@ void Application::detectWindowDimensionChange() {
 }
 
 void Application::loop() {}
+
+void Application::cleanup() {
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+    logPossibleGLError();
+
+    glfwDestroyWindow(window);
+    glfwTerminate();
+}
 
 #ifdef __APPLE__
 int Application::getFramebufferWidth() {
@@ -172,4 +176,5 @@ void Application::initImGUI() {
 
     (void)io;
 }
+
 }  // namespace loo

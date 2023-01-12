@@ -41,6 +41,27 @@ void getFileContents(const char* filename, vector<char>& buffer) {
                                     " doesn't exists");
     }
 }
+
+#ifdef OGL_46
+// https://www.khronos.org/opengl/wiki/SPIR-V
+Shader::Shader(const vector<unsigned char>& spirvBinary, GLenum type,
+               const char* entryPoint) {
+    // Create an empty vertex shader handle
+    handle = glCreateShader(type);
+
+    // Apply the vertex shader SPIR-V to the shader object.
+    glShaderBinary(1, &handle, GL_SHADER_BINARY_FORMAT_SPIR_V,
+                   spirvBinary.data(), spirvBinary.size());
+
+    // Specialize the vertex shader.
+    glSpecializeShader(handle, entryPoint, 0, nullptr, nullptr);
+
+    // Specialization is equivalent to compilation.
+    checkCompileStatus();
+}
+
+#endif
+
 Shader::Shader(Shader&& other) {
     this->handle = other.getHandle();
     other.handle = GL_INVALID_INDEX;
@@ -58,7 +79,10 @@ Shader::Shader(const char* shaderContent, GLenum type) {
 
     // compilation
     glCompileShader(handle);
+    checkCompileStatus();
+}
 
+void Shader::checkCompileStatus() const {
     // compilation check
     GLint compile_status;
     glGetShaderiv(handle, GL_COMPILE_STATUS, &compile_status);
@@ -103,6 +127,7 @@ ShaderProgram::ShaderProgram(std::initializer_list<Shader> shaderList)
     for (auto& s : shaderList) glAttachShader(handle, s.getHandle());
 
     link();
+    for (auto& s : shaderList) glDetachShader(handle, s.getHandle());
 }
 
 ShaderProgram::ShaderProgram(ShaderProgram&& other)

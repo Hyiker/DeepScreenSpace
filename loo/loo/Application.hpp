@@ -80,8 +80,9 @@ class LOO_EXPORT Application {
    protected:
     std::string title;
 
-    virtual void loop();
     void initImGUI();
+    virtual void loop();
+    virtual void cleanup();
 
    private:
     void initGLFW();

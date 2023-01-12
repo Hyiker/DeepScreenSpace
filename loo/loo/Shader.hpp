@@ -9,6 +9,7 @@
 #define LOO_LOO_SHADER_HPP
 
 #include <exception>
+#include <vector>
 #define GLM_FORCE_RADIANS
 #include <glad/glad.h>
 
@@ -27,6 +28,10 @@ class LOO_EXPORT Shader {
    public:
     // Load Shader from a file
     Shader(const char* shaderContent, GLenum type);
+#ifdef OGL_46
+    explicit Shader(const std::vector<unsigned char>& spirvBinary, GLenum type,
+                    const char* entryPoint = "main");
+#endif
     Shader(Shader&) = delete;
     Shader(Shader&& other);
 
@@ -36,6 +41,7 @@ class LOO_EXPORT Shader {
     ~Shader();
 
    private:
+    void checkCompileStatus() const;
     // opengl program identifiant
     GLuint handle;
 

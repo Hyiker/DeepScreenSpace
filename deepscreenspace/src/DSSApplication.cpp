@@ -5,25 +5,15 @@
 
 #include <loo/glError.hpp>
 #include <vector>
+
+#include "shaders/base.frag.hpp"
+#include "shaders/base.vert.hpp"
 using namespace loo;
 using namespace std;
 DSSApplication::DSSApplication(int width, int height)
     : Application(width, height),
-      m_quad_shader(
-          {Shader("#version 330 core\n"
-                  "layout (location = 0) in vec3 aPos;\n"
-                  "void main()\n"
-                  "{\n"
-                  "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-                  "}\0",
-                  GL_VERTEX_SHADER),
-           Shader("#version 330 core\n"
-                  "out vec4 FragColor;\n"
-                  "void main()\n"
-                  "{\n"
-                  "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-                  "}\n\0",
-                  GL_FRAGMENT_SHADER)}),
+      m_quad_shader{Shader(BASE_VERT, GL_VERTEX_SHADER, "main"),
+                    Shader(BASE_FRAG, GL_FRAGMENT_SHADER, "main")},
       m_scene() {
     float vertices[] = {
         0.5f,  0.5f,  0.0f,  // top right
