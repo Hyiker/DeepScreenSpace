@@ -142,7 +142,7 @@ void ShaderProgram::link() {
     GLint result;
     glGetProgramiv(handle, GL_LINK_STATUS, &result);
     if (result != GL_TRUE) {
-        cout << "[Error] linkage error" << endl;
+        LOG(ERROR) << "Linkage error" << endl;
 
         GLsizei logsize = 0;
         glGetProgramiv(handle, GL_INFO_LOG_LENGTH, &logsize);
@@ -150,7 +150,7 @@ void ShaderProgram::link() {
         char* log = new char[logsize];
         glGetProgramInfoLog(handle, logsize, &logsize, log);
 
-        cout << log << endl;
+        LOG(ERROR) << log << endl;
     }
 }
 

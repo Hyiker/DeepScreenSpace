@@ -5,6 +5,7 @@
 #include "DSSApplication.hpp"
 int main(int argc, char *argv[]) {
     loo::initialize(argv[0]);
-    DSSApplication app(800, 600);
+    DSSApplication app(1920, 1280);
+    app.loadObj(argv[1]);
     app.run();
 }

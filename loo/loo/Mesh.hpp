@@ -25,12 +25,12 @@ struct LOO_EXPORT Material {
     float ior;
     int illum;
 
-    std::shared_ptr<Texture> ambientTex;
-    std::shared_ptr<Texture> diffuseTex;
-    std::shared_ptr<Texture> displacementTex;
-    std::shared_ptr<Texture> normalTex;
-    std::shared_ptr<Texture> specularTex;
-    std::shared_ptr<Texture> alphaTex;
+    std::shared_ptr<Texture> ambientTex{};
+    std::shared_ptr<Texture> diffuseTex{};
+    std::shared_ptr<Texture> displacementTex{};
+    std::shared_ptr<Texture> normalTex{};
+    std::shared_ptr<Texture> specularTex{};
+    std::shared_ptr<Texture> alphaTex{};
 };
 struct LOO_EXPORT Mesh {
     std::vector<Vertex> vertices;

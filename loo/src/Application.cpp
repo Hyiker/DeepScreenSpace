@@ -58,6 +58,9 @@ void Application::run() {
     time = glfwGetTime();
 
     while (state == stateRun && !glfwWindowShouldClose(window)) {
+        // set glfwPointer to current window just to make sure callback get the
+        // right context
+        glfwSetWindowUserPointer(getWindow(), this);
         // compute new time and delta time
         float t = glfwGetTime();
         deltaTime = t - time;
@@ -172,9 +175,26 @@ void Application::initImGUI() {
     ImGui::StyleColorsDark();
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init("#version 150");
+    ImGui_ImplOpenGL3_Init("#version 430");
 
     (void)io;
+}
+
+bool Application::keyForward() {
+    return glfwGetKey(getWindow(), GLFW_KEY_W) == GLFW_PRESS ||
+           glfwGetKey(getWindow(), GLFW_KEY_UP) == GLFW_PRESS;
+}
+bool Application::keyBackward() {
+    return glfwGetKey(getWindow(), GLFW_KEY_S) == GLFW_PRESS ||
+           glfwGetKey(getWindow(), GLFW_KEY_DOWN) == GLFW_PRESS;
+}
+bool Application::keyLeft() {
+    return glfwGetKey(getWindow(), GLFW_KEY_A) == GLFW_PRESS ||
+           glfwGetKey(getWindow(), GLFW_KEY_LEFT) == GLFW_PRESS;
+}
+bool Application::keyRight() {
+    return glfwGetKey(getWindow(), GLFW_KEY_D) == GLFW_PRESS ||
+           glfwGetKey(getWindow(), GLFW_KEY_RIGHT) == GLFW_PRESS;
 }
 
 }  // namespace loo

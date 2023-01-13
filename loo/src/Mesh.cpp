@@ -50,9 +50,9 @@ size_t Mesh::countVertex() const { return vertices.size(); }
 void Mesh::draw(ShaderProgram& sp) const {
     glBindVertexArray(vao);
 
-    // sp.setUniform("material.ambient", material.ambient);
-    // sp.setUniform("material.diffuse", material.diffuse);
-    // sp.setUniform("material.specular", material.specular);
+    sp.setUniform("material.ambient", material->ambient);
+    sp.setUniform("material.diffuse", material->diffuse);
+    sp.setUniform("material.specular", material->specular);
     // sp.setUniform("material.shininess", material.shininess);
     // sp.setUniform("material.ior", material.ior);
     // sp.setUniform("material.illum", material.illum);
@@ -80,6 +80,7 @@ void Mesh::draw(ShaderProgram& sp) const {
 }
 
 static unordered_map<string, shared_ptr<Texture>> uniqueTexture;
+
 static std::shared_ptr<Material> createMaterialFromObjFile(
     const material_t& mat, fs::path objParent) {
     auto material = make_shared<Material>();
@@ -92,20 +93,36 @@ static std::shared_ptr<Material> createMaterialFromObjFile(
     material->ior = mat.ior;
     material->illum = mat.illum;
 
-    material->ambientTex = createTextureFromFile(
-        uniqueTexture, (objParent / mat.ambient_texname).string());
-    material->diffuseTex = createTextureFromFile(
-        uniqueTexture, (objParent / mat.diffuse_texname).string());
-    material->specularTex = createTextureFromFile(
-        uniqueTexture, (objParent / mat.specular_texname).string());
-    material->displacementTex = createTextureFromFile(
-        uniqueTexture, (objParent / mat.displacement_texname).string());
-    material->normalTex = createTextureFromFile(
-        uniqueTexture, (objParent / mat.normal_texname).string());
+    if (mat.ambient_texname.length())
+        material->ambientTex = createTextureFromFile(
+            uniqueTexture, (objParent / mat.ambient_texname).string());
+    if (mat.diffuse_texname.length())
+        material->diffuseTex = createTextureFromFile(
+            uniqueTexture, (objParent / mat.diffuse_texname).string());
+    if (mat.specular_texname.length())
+        material->specularTex = createTextureFromFile(
+            uniqueTexture, (objParent / mat.specular_texname).string());
+    if (mat.displacement_texname.length())
+        material->displacementTex = createTextureFromFile(
+            uniqueTexture, (objParent / mat.displacement_texname).string());
+    if (mat.normal_texname.length())
+        material->normalTex = createTextureFromFile(
+            uniqueTexture, (objParent / mat.normal_texname).string());
     return material;
 }
 std::vector<std::shared_ptr<Mesh>> createMeshFromObjFile(
     const std::string& filename) {
+    static shared_ptr<Material> defaultMaterial{nullptr};
+    if (!defaultMaterial) {
+        defaultMaterial = make_shared<Material>();
+        defaultMaterial->ambient = glm::vec3(1.0, 0.0, 1.0);
+        defaultMaterial->diffuse = glm::vec3(1.0, 0.0, 1.0);
+        defaultMaterial->specular = glm::vec3(1.0, 0.0, 1.0);
+
+        defaultMaterial->shininess = 0;
+        defaultMaterial->ior = 1.0;
+        defaultMaterial->illum = 1.0;
+    }
     ObjReader reader;
     ObjReaderConfig config;
 
@@ -136,10 +153,21 @@ std::vector<std::shared_ptr<Mesh>> createMeshFromObjFile(
         vector<Vertex> vertices;
 
         std::shared_ptr<Material> material{};
+
         // one material for one mesh
         if (shape.mesh.material_ids.size()) {
-            material = createMaterialFromObjFile(
-                materials[shape.mesh.material_ids[0]], objParent);
+            int n = 0;
+            n++;
+            while (n < shape.mesh.material_ids.size() &&
+                   shape.mesh.material_ids[n] == -1) {
+                n++;
+            }
+            if (shape.mesh.material_ids[0] != -1) {
+                material = createMaterialFromObjFile(
+                    materials[shape.mesh.material_ids[0]], objParent);
+            } else {
+                material = defaultMaterial;
+            }
         }
         for (const auto& idx : shape.mesh.indices) {
             Vertex vertex;

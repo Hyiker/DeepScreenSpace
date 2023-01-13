@@ -18,7 +18,7 @@ target("loo")
     else
         ogl_ver = "46"
     end
-    add_defines("OGL_" .. ogl_ver, {public = true})
+    add_defines("OGL_" .. ogl_ver, "_USE_MATH_DEFINES", {public = true})
     add_includedirs(string.format("ext/glad%s/include", ogl_ver), {public = true})
     add_files(string.format("ext/glad%s/src/glad.c", ogl_ver), {public = true})
     on_config(function (target)

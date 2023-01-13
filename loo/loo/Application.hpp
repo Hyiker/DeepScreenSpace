@@ -9,9 +9,9 @@
 #ifndef LOO_LOO_APPLICATION_HPP
 #define LOO_LOO_APPLICATION_HPP
 
+#include <functional>
 #include <string>
 
-#include "Shader.hpp"
 #include "predefs.hpp"
 
 struct GLFWwindow;
@@ -59,6 +59,7 @@ class LOO_EXPORT Application {
 
     float getWindowRatio();
     bool windowDimensionChanged();
+    void setContext(Application* ctx);
 
    private:
     enum State { stateReady, stateRun, stateExit };
@@ -81,13 +82,17 @@ class LOO_EXPORT Application {
     std::string title;
 
     void initImGUI();
+    // predefined FPS keyset
+    bool keyForward();
+    bool keyBackward();
+    bool keyLeft();
+    bool keyRight();
+
     virtual void loop();
     virtual void cleanup();
 
    private:
     void initGLFW();
-
-    GLuint VAO;
 };
 }  // namespace loo
 

@@ -23,7 +23,7 @@ target("DeepScreenSpace")
         local shader_src = path.join("$(projectdir)", "deepscreenspace", "shaders")
         local shader_target = path.join("$(projectdir)", "deepscreenspace", "include", "shaders")
         local glslc = "glslc.exe"
-        local glslc_args = "-fauto-map-locations"
+        local glslc_args = "-fauto-map-locations -fauto-bind-uniforms -fauto-combined-image-sampler --target-env=opengl"
 
         cprintf("${bright green}[INFO] ${clear}compiling shaders under %s\n", shader_src)
 
