@@ -1,6 +1,9 @@
 #include "loo/Camera.hpp"
 
+#include <algorithm>
 #include <iostream>
+
+#include "glm/trigonometric.hpp"
 
 namespace loo {
 
@@ -58,4 +61,9 @@ void Camera::processMouseMovement(float xoffset, float yoffset,
 
     updateCameraVectors();
 }
+void Camera::processMouseScroll(float xoffset, float yoffset) {
+    m_fov -= yoffset * 0.05;
+    m_fov = std::clamp(m_fov, 0.01f, float(glm::radians(160.f)));
+}
+
 }  // namespace loo

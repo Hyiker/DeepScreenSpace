@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 
+#include <fstream>
 #include <loo/glError.hpp>
 #include <memory>
 #include <vector>
@@ -41,6 +42,11 @@ static void mouseCallback(GLFWwindow* window, double xposIn, double yposIn) {
     myapp->getCamera().processMouseMovement(xoffset, yoffset);
 }
 
+static void scrollCallback(GLFWwindow* window, double xOffset, double yOffset) {
+    auto myapp = static_cast<DSSApplication*>(glfwGetWindowUserPointer(window));
+    myapp->getCamera().processMouseScroll(xOffset, yOffset);
+}
+
 void DSSApplication::loadModel(const std::string& filename, float scaling) {
     LOG(INFO) << "Loading model from " << filename << endl;
     glm::mat4 transform = glm::scale(glm::identity<glm::mat4>(),
@@ -66,6 +72,20 @@ DSSApplication::DSSApplication(int width, int height)
       m_scene(),
       m_maincam(),
       m_mvpbuffer(0, sizeof(MVP)) {
+    ifstream ifs("camera.txt");
+    if (!ifs.fail()) {
+        glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
+        glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+        float yaw = -90.0f;
+        float pitch = 0.0f;
+        float aspect = 4.f / 3.f;
+
+        ifs >> position.x >> position.y >> position.z;
+        // ifs >> up.x >> up.y >> up.z;
+        ifs >> yaw >> pitch >> aspect;
+        m_maincam = Camera(position, up, yaw, pitch, aspect);
+    }
+    ifs.close();
     logPossibleGLError();
 }
 void DSSApplication::gui() {
@@ -115,4 +135,18 @@ void DSSApplication::loop() {
     // gui
     this->gui();
     glfwSetCursorPosCallback(getWindow(), mouseCallback);
+    glfwSetScrollCallback(getWindow(), scrollCallback);
+}
+
+void DSSApplication::afterCleanup() {
+    ofstream ofs("camera.txt");
+    auto p = m_maincam.getPosition();
+    auto up = m_maincam.up;
+    auto yaw = m_maincam.yaw;
+    auto pitch = m_maincam.pitch;
+    auto aspect = m_maincam.m_aspect;
+    ofs << p.x << " " << p.y << " " << p.z << endl;
+    ofs << up.x << " " << up.y << " " << up.z << endl;
+    ofs << yaw << " " << pitch << " " << aspect;
+    ofs.close();
 }

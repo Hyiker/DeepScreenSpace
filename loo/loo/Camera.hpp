@@ -56,6 +56,8 @@ class LOO_EXPORT Camera {
     void processMouseMovement(float xoffset, float yoffset,
                               GLboolean constrainpitch = true);
 
+    void processMouseScroll(float xoffset, float yoffset);
+
    private:
     void updateCameraVectors();
 };

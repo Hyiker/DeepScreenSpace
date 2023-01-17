@@ -18,6 +18,7 @@ class DSSApplication : public loo::Application {
     void loadModel(const std::string& filename, float scaling = 1.0);
     void loadGLTF(const std::string& filename);
     loo::Camera& getCamera() { return m_maincam; }
+    void afterCleanup() override;
 
    private:
     void loop() override;

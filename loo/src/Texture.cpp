@@ -12,7 +12,7 @@ std::shared_ptr<Texture> createTextureFromFile(
     if (filename.length() == 0) return nullptr;
     if (uniqueTexture.count(filename)) return uniqueTexture[filename];
     shared_ptr<Texture> tex = make_shared<Texture>();
-
+    LOG(INFO) << "Texture " << filename << " loaded.\n";
     stbi_set_flip_vertically_on_load(true);
     int ncomp;
     int width, height;

@@ -52,29 +52,18 @@ void Mesh::draw(ShaderProgram& sp) const {
     glBindVertexArray(vao);
     // bind material uniforms
     material->bind();
-
-    // sp.setUniform("material.ambient", material->ambient);
-    // sp.setUniform("material.diffuse", material->diffuse);
-    // sp.setUniform("material.specular", material->specular);
-    // sp.setUniform("material.shininess", material.shininess);
-    // sp.setUniform("material.ior", material.ior);
-    // sp.setUniform("material.illum", material.illum);
-
-    // if (material.ambientTex)
-    //     sp.setTexture("material.ambientTex", 0,
-    //     material.ambientTex->getId());
-    // if (material.diffuseTex)
-    //     sp.setTexture("material.diffuseTex", 1,
-    //     material.diffuseTex->getId());
-    // if (material.specularTex)
-    //     sp.setTexture("material.specularTex", 2,
-    //     material.specularTex->getId());
-    // if (material.displacementTex)
-    //     sp.setTexture("material.displacementTex", 3,
-    //                   material.displacementTex->getId());
-    // ;
-    // if (material.normalTex)
-    //     sp.setTexture("material.normalTex", 4, material.normalTex->getId());
+    auto simpleMaterial = dynamic_pointer_cast<SimpleMaterial>(material);
+    if (simpleMaterial->ambientTex)
+        sp.setTexture("ambientTex", 0, simpleMaterial->ambientTex->getId());
+    if (simpleMaterial->diffuseTex)
+        sp.setTexture("diffuseTex", 1, simpleMaterial->diffuseTex->getId());
+    if (simpleMaterial->specularTex)
+        sp.setTexture("specularTex", 2, simpleMaterial->specularTex->getId());
+    if (simpleMaterial->displacementTex)
+        sp.setTexture("displacementTex", 3,
+                      simpleMaterial->displacementTex->getId());
+    if (simpleMaterial->normalTex)
+        sp.setTexture("normalTex", 4, simpleMaterial->normalTex->getId());
 
     glDrawElements(GL_TRIANGLES, static_cast<GLuint>(indices.size()),
                    GL_UNSIGNED_INT, nullptr);

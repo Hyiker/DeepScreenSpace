@@ -45,6 +45,9 @@ class LOO_EXPORT Application {
     // application run
     void run();
 
+    virtual void beforeCleanup(){};
+    virtual void afterCleanup(){};
+
     // Application informations
 #ifdef __APPLE__
     // MacOS has different default window size and framebuffer size

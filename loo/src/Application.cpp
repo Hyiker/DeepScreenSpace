@@ -86,9 +86,11 @@ void Application::run() {
         // Pool and process events
         glfwPollEvents();
     }
+    beforeCleanup();
     LOG(INFO) << "Cleaning up" << endl;
     // Cleanup
     cleanup();
+    afterCleanup();
 }
 
 void Application::detectWindowDimensionChange() {
