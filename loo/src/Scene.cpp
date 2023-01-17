@@ -8,11 +8,6 @@
 #include <loo/glError.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
-
-#define TINYGLTF_IMPLEMENTATION
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include <tiny_gltf.h>
-
 #include <glm/gtx/hash.hpp>
 #include <iostream>
 
@@ -76,19 +71,7 @@ void Scene::draw(ShaderProgram& sp) const {
 
 Scene::Scene() = default;
 
-Scene createSceneFromGLTF(const std::string& filename) {
-    using namespace tinygltf;
-    fs::path p(filename);
-    Model model;
-    TinyGLTF loader;
-    std::string err;
-    std::string warn;
-    bool ret = p.extension() == ".gltf"
-                   ? loader.LoadASCIIFromFile(&model, &err, &warn, filename)
-                   : loader.LoadBinaryFromFile(&model, &err, &warn, filename);
-    if (!warn.empty()) LOG(WARNING) << warn << endl;
-    if (!err.empty()) LOG(ERROR) << err << endl;
-    if (!ret) LOG(FATAL) << "Failed to parse glTF" << endl;
+Scene createSceneFromFile(const std::string& filename) {
     NOT_IMPLEMENTED();
     return std::move(Scene());
 }

@@ -40,7 +40,7 @@ struct LOO_EXPORT Mesh {
     void draw(ShaderProgram& sp) const;
 };
 
-LOO_EXPORT std::vector<std::shared_ptr<Mesh>> createMeshFromObjFile(
+LOO_EXPORT std::vector<std::shared_ptr<Mesh>> createMeshFromFile(
     const std::string& filename,
     const glm::mat4& basicTransform = glm::identity<glm::mat4>());
 

@@ -40,7 +40,7 @@ class LOO_EXPORT Scene {
     Scene();
 };
 
-LOO_EXPORT Scene createSceneFromGLTF(const std::string& filename);
+LOO_EXPORT Scene createSceneFromFile(const std::string& filename);
 
 LOO_EXPORT glm::mat4 getLightSpaceTransform(glm::vec3 lightPosition);
 }  // namespace loo

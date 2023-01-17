@@ -15,7 +15,7 @@ void loadScene(DSSApplication& app, const char* filename, float scaling) {
     auto suffix = p.extension();
     if (suffix == ".obj") {
         LOG(INFO) << "Loading model from .obj file" << endl;
-        app.loadObj(filename, scaling);
+        app.loadModel(filename, scaling);
     } else if (suffix == ".gltf" || suffix == ".glb") {
         LOG(INFO) << "Loading scene from gltf file" << endl;
         app.loadGLTF(filename);

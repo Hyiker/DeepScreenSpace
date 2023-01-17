@@ -14,7 +14,8 @@
 class DSSApplication : public loo::Application {
    public:
     DSSApplication(int width, int height);
-    void loadObj(const std::string& filename, float scaling = 1.0);
+    // only load model
+    void loadModel(const std::string& filename, float scaling = 1.0);
     void loadGLTF(const std::string& filename);
     loo::Camera& getCamera() { return m_maincam; }
 

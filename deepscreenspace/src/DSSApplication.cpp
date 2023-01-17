@@ -41,11 +41,11 @@ static void mouseCallback(GLFWwindow* window, double xposIn, double yposIn) {
     myapp->getCamera().processMouseMovement(xoffset, yoffset);
 }
 
-void DSSApplication::loadObj(const std::string& filename, float scaling) {
+void DSSApplication::loadModel(const std::string& filename, float scaling) {
     LOG(INFO) << "Loading model from " << filename << endl;
     glm::mat4 transform = glm::scale(glm::identity<glm::mat4>(),
                                      glm::vec3(scaling, scaling, scaling));
-    auto meshes = createMeshFromObjFile(filename, transform);
+    auto meshes = createMeshFromFile(filename, transform);
     m_scene.addMeshes(std::move(meshes));
 
     m_scene.prepare();
@@ -54,7 +54,7 @@ void DSSApplication::loadObj(const std::string& filename, float scaling) {
 
 void DSSApplication::loadGLTF(const std::string& filename) {
     LOG(INFO) << "Loading scene from " << filename << endl;
-    m_scene = createSceneFromGLTF(filename);
+    m_scene = createSceneFromFile(filename);
     // m_scene->prepare();
     LOG(INFO) << "Load done" << endl;
 }

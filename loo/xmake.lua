@@ -9,8 +9,7 @@ target("loo")
     add_includedirs(".", "ext/headeronly", {public = true})
 
     add_files("src/*.cpp")
-    add_packages("glfw", "glm", "glog", "imgui", {public = true})
-    add_packages("assimp")
+    add_packages("glfw", "glm", "glog", "imgui", "assimp", {public = true})
 
     -- glad
     if is_plat("macosx") then

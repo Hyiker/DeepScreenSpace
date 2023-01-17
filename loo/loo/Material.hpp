@@ -1,7 +1,7 @@
 #ifndef LOO_LOO_MATERIAL_HPP
 #define LOO_LOO_MATERIAL_HPP
+#include <assimp/material.h>
 #include <glog/logging.h>
-#include <tiny_obj_loader.h>
 
 #include <filesystem>
 #include <glm/glm.hpp>
@@ -60,7 +60,7 @@ class LOO_EXPORT SimpleMaterial : public Material {
     std::shared_ptr<Texture> specularTex{};
     std::shared_ptr<Texture> alphaTex{};
 };
-LOO_EXPORT std::shared_ptr<Material> createSimpleMaterialFromObjFile(
-    const tinyobj::material_t& mat, std::filesystem::path objParent);
+std::shared_ptr<Material> createSimpleMaterialFromAssimp(
+    const aiMaterial* aMaterial, std::filesystem::path objParent);
 }  // namespace loo
 #endif /* LOO_LOO_MATERIAL_HPP */
