@@ -72,9 +72,8 @@ void Mesh::draw(ShaderProgram& sp) const {
     // ;
     // if (material.normalTex)
     //     sp.setTexture("material.normalTex", 4, material.normalTex->getId());
-
     glDrawElements(GL_TRIANGLES, static_cast<GLuint>(indices.size()),
-                   GL_UNSIGNED_INT, 0);
+                   GL_UNSIGNED_INT, nullptr);
 
     glBindVertexArray(0);
 }
@@ -111,7 +110,7 @@ static std::shared_ptr<Material> createMaterialFromObjFile(
     return material;
 }
 std::vector<std::shared_ptr<Mesh>> createMeshFromObjFile(
-    const std::string& filename) {
+    const std::string& filename, const glm::mat4& basicTransform) {
     static shared_ptr<Material> defaultMaterial{nullptr};
     if (!defaultMaterial) {
         defaultMaterial = make_shared<Material>();
@@ -147,10 +146,10 @@ std::vector<std::shared_ptr<Mesh>> createMeshFromObjFile(
     vector<shared_ptr<Mesh>> meshes;
 
     unordered_map<string, std::shared_ptr<Texture>> uniqueTexture;
-    unordered_map<Vertex, unsigned int> uniqueVertices;
     for (auto& shape : shapes) {
         vector<unsigned int> indices;
         vector<Vertex> vertices;
+        unordered_map<Vertex, unsigned int> uniqueVertices;
 
         std::shared_ptr<Material> material{};
 
@@ -205,7 +204,7 @@ std::vector<std::shared_ptr<Mesh>> createMeshFromObjFile(
             indices.push_back(uniqueVertices[vertex]);
         }
         auto mesh = make_shared<Mesh>(std::move(vertices), std::move(indices),
-                                      material, shape.name);
+                                      material, shape.name, basicTransform);
         meshes.push_back(mesh);
     }
     return meshes;

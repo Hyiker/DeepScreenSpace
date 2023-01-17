@@ -45,6 +45,10 @@ class LOO_EXPORT Camera {
 
     glm::mat4 getProjectionMatrix() const;
 
+    void getViewMatrix(glm::mat4& view) const;
+
+    void getProjectionMatrix(glm::mat4& projection) const;
+
     glm::vec3 getPosition() const;
 
     void processKeyboard(CameraMovement direction, float deltaTime);

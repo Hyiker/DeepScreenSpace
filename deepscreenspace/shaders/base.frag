@@ -3,7 +3,7 @@ layout(location = 0) in vec3 vPos;
 layout(location = 1) in vec3 vNormal;
 
 out vec4 FragColor;
-layout(location = 3) uniform vec3 uCameraPosition;
+layout(location = 0) uniform vec3 uCameraPosition;
 layout(location = 4) uniform struct {
     vec3 ambient;
     vec3 diffuse;

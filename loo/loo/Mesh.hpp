@@ -6,6 +6,7 @@
 
 #include "Shader.hpp"
 #include "Texture.hpp"
+#include "glm/ext/matrix_transform.hpp"
 #include "predefs.hpp"
 namespace loo {
 
@@ -37,13 +38,16 @@ struct LOO_EXPORT Mesh {
     std::vector<unsigned int> indices;
     std::shared_ptr<Material> material;
     std::string name;
+    glm::mat4 m_objmat;
 
     Mesh(std::vector<Vertex>&& vertices, std::vector<unsigned int>&& indicies,
-         std::shared_ptr<Material> material, std::string name)
+         std::shared_ptr<Material> material, std::string name,
+         const glm::mat4& transform)
         : vertices(vertices),
           indices(indicies),
           material(material),
-          name(std::move(name)) {}
+          name(std::move(name)),
+          m_objmat(transform) {}
 
     GLuint vao, vbo, ebo;
     void prepare();
@@ -52,7 +56,8 @@ struct LOO_EXPORT Mesh {
 };
 
 LOO_EXPORT std::vector<std::shared_ptr<Mesh>> createMeshFromObjFile(
-    const std::string& filename);
+    const std::string& filename,
+    const glm::mat4& basicTransform = glm::identity<glm::mat4>());
 
 }  // namespace loo
 

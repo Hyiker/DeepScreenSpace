@@ -25,13 +25,22 @@ class LOO_EXPORT Scene {
     void translate(glm::vec3 pos);
     void prepare() const;
     glm::mat4 getModelMatrix() const;
+
+    // +++++ debug use +++++
     size_t countMesh() const;
     size_t countVertex() const;
+    // +++++ debug use +++++
+
     void addMeshes(std::vector<std::shared_ptr<Mesh>>&& meshes);
+
+    void draw(ShaderProgram& sp,
+              std::function<void(const Scene&, const Mesh&)> beforeDraw) const;
 
     void draw(ShaderProgram& sp) const;
     Scene();
 };
+
+LOO_EXPORT Scene createSceneFromGLTF(const std::string& filename);
 
 LOO_EXPORT glm::mat4 getLightSpaceTransform(glm::vec3 lightPosition);
 }  // namespace loo

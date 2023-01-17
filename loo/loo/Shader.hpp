@@ -114,21 +114,6 @@ class LOO_EXPORT ShaderProgram {
     void link();
 };
 
-// TODO:
-// class LOO_EXPORT UniformBuffer {
-//    public:
-//     UniformBuffer(int bindPoint);
-//     UniformBuffer(UniformBuffer&) = delete;
-//     UniformBuffer(UniformBuffer&& other);
-//     void bindShader(const ShaderProgram& sp);
-
-//     ~UniformBuffer();
-
-//    private:
-//     int m_bindpoint;
-//     GLuint handle;
-// };
-
 class LOO_EXPORT ShaderCompileException : public std::exception {
    public:
     using std::exception::exception;

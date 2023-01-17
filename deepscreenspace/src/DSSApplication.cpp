@@ -4,40 +4,16 @@
 #include <imgui.h>
 
 #include <loo/glError.hpp>
+#include <memory>
 #include <vector>
 
+#include "glm/ext/matrix_float4x4.hpp"
+#include "glm/ext/matrix_transform.hpp"
 #include "glm/fwd.hpp"
 #include "shaders/base.frag.hpp"
 #include "shaders/base.vert.hpp"
 using namespace loo;
 using namespace std;
-void DSSApplication::loadObj(const std::string& filename) {
-    LOG(INFO) << "Loading object from " << filename << endl;
-    auto meshes = createMeshFromObjFile(filename);
-    m_scene.addMeshes(std::move(meshes));
-
-    m_scene.scale(glm::vec3(0.1, 0.1, 0.1));
-    m_scene.prepare();
-    LOG(INFO) << "Load done" << endl;
-}
-
-DSSApplication::DSSApplication(int width, int height)
-    : Application(width, height),
-      m_baseshader{Shader(BASE_VERT, GL_VERTEX_SHADER),
-                   Shader(BASE_FRAG, GL_FRAGMENT_SHADER)},
-      m_scene() {}
-void DSSApplication::gui() {
-    ImGui::Begin("Debug Panel");
-    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
-                1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-
-    const GLubyte* renderer = glGetString(GL_RENDERER);
-    const GLubyte* version = glGetString(GL_VERSION);
-    ImGui::Text("Renderer: %s", renderer);
-    ImGui::Text("OpenGL Version: %s", version);
-
-    ImGui::End();
-}
 
 static void mouseCallback(GLFWwindow* window, double xposIn, double yposIn) {
     static bool firstMouse = true;
@@ -65,6 +41,46 @@ static void mouseCallback(GLFWwindow* window, double xposIn, double yposIn) {
     myapp->getCamera().processMouseMovement(xoffset, yoffset);
 }
 
+void DSSApplication::loadObj(const std::string& filename, float scaling) {
+    LOG(INFO) << "Loading model from " << filename << endl;
+    glm::mat4 transform = glm::scale(glm::identity<glm::mat4>(),
+                                     glm::vec3(scaling, scaling, scaling));
+    auto meshes = createMeshFromObjFile(filename, transform);
+    m_scene.addMeshes(std::move(meshes));
+
+    m_scene.prepare();
+    LOG(INFO) << "Load done" << endl;
+}
+
+void DSSApplication::loadGLTF(const std::string& filename) {
+    LOG(INFO) << "Loading scene from " << filename << endl;
+    m_scene = createSceneFromGLTF(filename);
+    // m_scene->prepare();
+    LOG(INFO) << "Load done" << endl;
+}
+
+DSSApplication::DSSApplication(int width, int height)
+    : Application(width, height),
+      m_baseshader{Shader(BASE_VERT, GL_VERTEX_SHADER),
+                   Shader(BASE_FRAG, GL_FRAGMENT_SHADER)},
+      m_scene(),
+      m_maincam(),
+      m_mvpbuffer(0, sizeof(MVP)) {
+    logPossibleGLError();
+}
+void DSSApplication::gui() {
+    ImGui::Begin("Debug Panel");
+    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+                1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+    const GLubyte* renderer = glGetString(GL_RENDERER);
+    const GLubyte* version = glGetString(GL_VERSION);
+    ImGui::Text("Renderer: %s", renderer);
+    ImGui::Text("OpenGL Version: %s", version);
+
+    ImGui::End();
+}
+
 void DSSApplication::loop() {
     m_maincam.m_aspect = getWindowRatio();
     // render
@@ -73,15 +89,18 @@ void DSSApplication::loop() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     logPossibleGLError();
+    m_maincam.getViewMatrix(m_mvp.view);
+    m_maincam.getProjectionMatrix(m_mvp.projection);
+    m_mvp.model = glm::identity<glm::mat4>();
+
     m_baseshader.use();
-    m_baseshader.setUniform("uView", m_maincam.getViewMatrix());
-    m_baseshader.setUniform("uProj", m_maincam.getProjectionMatrix());
-    m_baseshader.setUniform("uModel", m_scene.getModelMatrix());
     m_baseshader.setUniform("uCameraPosition", m_maincam.getPosition());
     logPossibleGLError();
 
-    m_scene.draw(m_baseshader);
-
+    m_scene.draw(m_baseshader, [this](const auto& scene, const auto& mesh) {
+        m_mvp.model = scene.getModelMatrix() * mesh.m_objmat;
+        m_mvpbuffer.updateData(0, sizeof(MVP), &m_mvp);
+    });
     logPossibleGLError();
     // cam
     if (keyForward())

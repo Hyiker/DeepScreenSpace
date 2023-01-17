@@ -23,6 +23,14 @@ glm::mat4 Camera::getProjectionMatrix() const {
     return glm::perspective(m_fov, m_aspect, m_znear, m_zfar);
 }
 
+void Camera::getViewMatrix(glm::mat4& view) const {
+    view = glm::lookAt(position, position + front, up);
+}
+
+void Camera::getProjectionMatrix(glm::mat4& projection) const {
+    projection = glm::perspective(m_fov, m_aspect, m_znear, m_zfar);
+}
+
 glm::vec3 Camera::getPosition() const { return position; }
 
 void Camera::processKeyboard(CameraMovement direction, float deltaTime) {

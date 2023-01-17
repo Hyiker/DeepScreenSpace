@@ -4,6 +4,10 @@
 namespace loo {
 class Shader;
 class ShaderProgram;
+class Application;
+class Camera;
+class Scene;
+class UniformBuffer;
 // Initialize libraries include:
 // * glog
 LOO_EXPORT void initialize(const char* argv0);
