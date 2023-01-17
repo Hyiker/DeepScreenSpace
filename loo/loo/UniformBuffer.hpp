@@ -10,8 +10,12 @@ class LOO_EXPORT UniformBuffer {
     UniformBuffer(int bindPoint, size_t dataSize, void* dataPtr = nullptr);
     UniformBuffer(UniformBuffer&) = delete;
     UniformBuffer(UniformBuffer&& other);
-    void updateData(int offset, size_t dataSize, void* dataPtr) {
+    void updateData(int offset, size_t dataSize, void* dataPtr) const {
         glNamedBufferSubData(m_handle, offset, dataSize, dataPtr);
+    }
+
+    void updateData(void* dataPtr) const {
+        glNamedBufferSubData(m_handle, 0, m_datasize, dataPtr);
     }
 
     ~UniformBuffer() {

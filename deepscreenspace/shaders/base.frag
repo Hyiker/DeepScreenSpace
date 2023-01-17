@@ -4,15 +4,20 @@ layout(location = 1) in vec3 vNormal;
 
 out vec4 FragColor;
 layout(location = 0) uniform vec3 uCameraPosition;
-layout(location = 4) uniform struct {
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
-} material;
+layout(std140, binding = 1) uniform SimpleMaterial {
+    vec4 ambient;
+    vec4 diffuse;
+    vec4 specular;
+
+    float shininess;
+    float ior;
+    int illum;
+}
+simpleMaterial;
 void main() {
     vec3 pLight = vec3(1.0);
     vec3 V = normalize(uCameraPosition - vPos);
     vec3 L = normalize(pLight - vPos);
     vec3 H = (V + L) / 2.0;
-    FragColor = vec4(abs(dot(L, normalize(vNormal))) * material.diffuse, 1.0f);
+    FragColor = simpleMaterial.diffuse;
 }

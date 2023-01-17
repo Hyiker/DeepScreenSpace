@@ -4,6 +4,7 @@
 #include <utility>
 #include <vector>
 
+#include "Material.hpp"
 #include "Shader.hpp"
 #include "Texture.hpp"
 #include "glm/ext/matrix_transform.hpp"
@@ -17,22 +18,6 @@ struct LOO_EXPORT Vertex {
     bool operator==(const Vertex& v) const;
 };
 
-struct LOO_EXPORT Material {
-    glm::vec3 ambient;
-    glm::vec3 diffuse;
-    glm::vec3 specular;
-
-    float shininess;
-    float ior;
-    int illum;
-
-    std::shared_ptr<Texture> ambientTex{};
-    std::shared_ptr<Texture> diffuseTex{};
-    std::shared_ptr<Texture> displacementTex{};
-    std::shared_ptr<Texture> normalTex{};
-    std::shared_ptr<Texture> specularTex{};
-    std::shared_ptr<Texture> alphaTex{};
-};
 struct LOO_EXPORT Mesh {
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;

@@ -26,7 +26,8 @@ void loadScene(DSSApplication& app, const char* filename, float scaling) {
 }
 
 int main(int argc, char* argv[]) {
-    loo::initialize(argv[0]);
+    loo::LooBasicConfigs conf;
+    loo::initialize(argv[0], &conf);
     DSSApplication app(1920, 1280);
 
     if (argc < 2) LOG(FATAL) << "Bad argument count\n";

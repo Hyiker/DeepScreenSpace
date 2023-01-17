@@ -140,10 +140,10 @@ namespace tinyobj {
 //
 
 #ifdef TINYOBJLOADER_USE_DOUBLE
-//#pragma message "using double"
+// #pragma message "using double"
 typedef double real_t;
 #else
-//#pragma message "using float"
+// #pragma message "using float"
 typedef float real_t;
 #endif
 
@@ -167,8 +167,8 @@ struct texture_option_t {
     real_t scale[3];          // -s u [v [w]] (default 1 1 1)
     real_t turbulence[3];     // -t u [v [w]] (default 0 0 0)
     int texture_resolution;   // -texres resolution (No default value in the
-                             // spec. We'll use -1)
-    bool clamp;  // -clamp (default false)
+                              // spec. We'll use -1)
+    bool clamp;               // -clamp (default false)
     char
         imfchan;  // -imfchan (the default for bump is 'l' and for decal is 'm')
     bool blendu;  // -blendu (default on)
@@ -363,7 +363,7 @@ struct mesh_t {
     std::vector<unsigned int> smoothing_group_ids;  // per-face smoothing group
                                                     // ID(0 = off. positive
                                                     // value = group id)
-    std::vector<tag_t> tags;  // SubD tag
+    std::vector<tag_t> tags;                        // SubD tag
 };
 
 // struct path_t {
@@ -411,15 +411,12 @@ struct attrib_t {
     // (e.g. using std::map, std::unordered_map)
     std::vector<skin_weight_t> skin_weights;
 
-    attrib_t() {
-    }
+    attrib_t() {}
 
     //
     // For pybind11
     //
-    const std::vector<real_t> &GetVertices() const {
-        return vertices;
-    }
+    const std::vector<real_t> &GetVertices() const { return vertices; }
 
     const std::vector<real_t> &GetVertexWeights() const {
         return vertex_weights;
@@ -458,14 +455,12 @@ struct callback_t {
           usemtl_cb(NULL),
           mtllib_cb(NULL),
           group_cb(NULL),
-          object_cb(NULL) {
-    }
+          object_cb(NULL) {}
 };
 
 class MaterialReader {
    public:
-    MaterialReader() {
-    }
+    MaterialReader() {}
     virtual ~MaterialReader();
 
     virtual bool operator()(const std::string &matId,
@@ -481,10 +476,8 @@ class MaterialFileReader : public MaterialReader {
    public:
     // Path could contain separator(';' in Windows, ':' in Posix)
     explicit MaterialFileReader(const std::string &mtl_basedir)
-        : m_mtlBaseDir(mtl_basedir) {
-    }
-    virtual ~MaterialFileReader() TINYOBJ_OVERRIDE {
-    }
+        : m_mtlBaseDir(mtl_basedir) {}
+    virtual ~MaterialFileReader() TINYOBJ_OVERRIDE {}
     virtual bool operator()(const std::string &matId,
                             std::vector<material_t> *materials,
                             std::map<std::string, int> *matMap,
@@ -501,10 +494,8 @@ class MaterialFileReader : public MaterialReader {
 class MaterialStreamReader : public MaterialReader {
    public:
     explicit MaterialStreamReader(std::istream &inStream)
-        : m_inStream(inStream) {
-    }
-    virtual ~MaterialStreamReader() TINYOBJ_OVERRIDE {
-    }
+        : m_inStream(inStream) {}
+    virtual ~MaterialStreamReader() TINYOBJ_OVERRIDE {}
     virtual bool operator()(const std::string &matId,
                             std::vector<material_t> *materials,
                             std::map<std::string, int> *matMap,
@@ -540,8 +531,7 @@ struct ObjReaderConfig {
     ObjReaderConfig()
         : triangulate(true),
           triangulation_method("simple"),
-          vertex_color(true) {
-    }
+          vertex_color(true) {}
 };
 
 ///
@@ -549,8 +539,7 @@ struct ObjReaderConfig {
 ///
 class ObjReader {
    public:
-    ObjReader() : valid_(false) {
-    }
+    ObjReader() : valid_(false) {}
 
     ///
     /// Load .obj and .mtl from a file.
@@ -577,35 +566,23 @@ class ObjReader {
     ///
     /// .obj was loaded or parsed correctly.
     ///
-    bool Valid() const {
-        return valid_;
-    }
+    bool Valid() const { return valid_; }
 
-    const attrib_t &GetAttrib() const {
-        return attrib_;
-    }
+    const attrib_t &GetAttrib() const { return attrib_; }
 
-    const std::vector<shape_t> &GetShapes() const {
-        return shapes_;
-    }
+    const std::vector<shape_t> &GetShapes() const { return shapes_; }
 
-    const std::vector<material_t> &GetMaterials() const {
-        return materials_;
-    }
+    const std::vector<material_t> &GetMaterials() const { return materials_; }
 
     ///
     /// Warning message(may be filled after `Load` or `Parse`)
     ///
-    const std::string &Warning() const {
-        return warning_;
-    }
+    const std::string &Warning() const { return warning_; }
 
     ///
     /// Error message(filled when `Load` or `Parse` failed)
     ///
-    const std::string &Error() const {
-        return error_;
-    }
+    const std::string &Error() const { return error_; }
 
    private:
     bool valid_;
@@ -719,18 +696,14 @@ bool ParseTextureNameAndOption(std::string *texname, texture_option_t *texopt,
 
 namespace tinyobj {
 
-MaterialReader::~MaterialReader() {
-}
+MaterialReader::~MaterialReader() {}
 
 struct vertex_index_t {
     int v_idx, vt_idx, vn_idx;
-    vertex_index_t() : v_idx(-1), vt_idx(-1), vn_idx(-1) {
-    }
-    explicit vertex_index_t(int idx) : v_idx(idx), vt_idx(idx), vn_idx(idx) {
-    }
+    vertex_index_t() : v_idx(-1), vt_idx(-1), vn_idx(-1) {}
+    explicit vertex_index_t(int idx) : v_idx(idx), vt_idx(idx), vn_idx(idx) {}
     vertex_index_t(int vidx, int vtidx, int vnidx)
-        : v_idx(vidx), vt_idx(vtidx), vn_idx(vnidx) {
-    }
+        : v_idx(vidx), vt_idx(vtidx), vn_idx(vnidx) {}
 };
 
 // Internal data structure for face representation
@@ -741,8 +714,7 @@ struct face_t {
     int pad_;
     std::vector<vertex_index_t> vertex_indices;  // face vertex indices.
 
-    face_t() : smoothing_group_id(0), pad_(0) {
-    }
+    face_t() : smoothing_group_id(0), pad_(0) {}
 };
 
 // Internal data structure for line representation
@@ -762,8 +734,7 @@ struct __points_t {
 };
 
 struct tag_sizes {
-    tag_sizes() : num_ints(0), num_reals(0), num_strings(0) {
-    }
+    tag_sizes() : num_ints(0), num_reals(0), num_strings(0) {}
     int num_ints;
     int num_reals;
     int num_strings;

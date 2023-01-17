@@ -11,6 +11,8 @@
 #include <filesystem>
 #include <string>
 #include <unordered_map>
+#define GLM_ENABLE_EXPERIMENTAL
+#include "glm/ext.hpp"
 namespace loo {
 using namespace std;
 using namespace tinyobj;
@@ -49,10 +51,12 @@ size_t Mesh::countVertex() const { return vertices.size(); }
 
 void Mesh::draw(ShaderProgram& sp) const {
     glBindVertexArray(vao);
+    // bind material uniforms
+    material->bind();
 
-    sp.setUniform("material.ambient", material->ambient);
-    sp.setUniform("material.diffuse", material->diffuse);
-    sp.setUniform("material.specular", material->specular);
+    // sp.setUniform("material.ambient", material->ambient);
+    // sp.setUniform("material.diffuse", material->diffuse);
+    // sp.setUniform("material.specular", material->specular);
     // sp.setUniform("material.shininess", material.shininess);
     // sp.setUniform("material.ior", material.ior);
     // sp.setUniform("material.illum", material.illum);
@@ -72,58 +76,18 @@ void Mesh::draw(ShaderProgram& sp) const {
     // ;
     // if (material.normalTex)
     //     sp.setTexture("material.normalTex", 4, material.normalTex->getId());
+
     glDrawElements(GL_TRIANGLES, static_cast<GLuint>(indices.size()),
                    GL_UNSIGNED_INT, nullptr);
 
     glBindVertexArray(0);
 }
 
-static unordered_map<string, shared_ptr<Texture>> uniqueTexture;
-
-static std::shared_ptr<Material> createMaterialFromObjFile(
-    const material_t& mat, fs::path objParent) {
-    auto material = make_shared<Material>();
-    for (int i = 0; i < 3; i++) {
-        material->ambient[i] = mat.ambient[i];
-        material->diffuse[i] = mat.diffuse[i];
-        material->specular[i] = mat.specular[i];
-    }
-    material->shininess = mat.shininess;
-    material->ior = mat.ior;
-    material->illum = mat.illum;
-
-    if (mat.ambient_texname.length())
-        material->ambientTex = createTextureFromFile(
-            uniqueTexture, (objParent / mat.ambient_texname).string());
-    if (mat.diffuse_texname.length())
-        material->diffuseTex = createTextureFromFile(
-            uniqueTexture, (objParent / mat.diffuse_texname).string());
-    if (mat.specular_texname.length())
-        material->specularTex = createTextureFromFile(
-            uniqueTexture, (objParent / mat.specular_texname).string());
-    if (mat.displacement_texname.length())
-        material->displacementTex = createTextureFromFile(
-            uniqueTexture, (objParent / mat.displacement_texname).string());
-    if (mat.normal_texname.length())
-        material->normalTex = createTextureFromFile(
-            uniqueTexture, (objParent / mat.normal_texname).string());
-    return material;
-}
 std::vector<std::shared_ptr<Mesh>> createMeshFromObjFile(
     const std::string& filename, const glm::mat4& basicTransform) {
-    static shared_ptr<Material> defaultMaterial{nullptr};
-    if (!defaultMaterial) {
-        defaultMaterial = make_shared<Material>();
-        defaultMaterial->ambient = glm::vec3(1.0, 0.0, 1.0);
-        defaultMaterial->diffuse = glm::vec3(1.0, 0.0, 1.0);
-        defaultMaterial->specular = glm::vec3(1.0, 0.0, 1.0);
-
-        defaultMaterial->shininess = 0;
-        defaultMaterial->ior = 1.0;
-        defaultMaterial->illum = 1.0;
-    }
     ObjReader reader;
     ObjReaderConfig config;
+    config.triangulation_method = "earcut";
 
     if (!reader.ParseFromFile(filename, config)) {
         if (!reader.Error().empty()) {
@@ -152,7 +116,6 @@ std::vector<std::shared_ptr<Mesh>> createMeshFromObjFile(
         unordered_map<Vertex, unsigned int> uniqueVertices;
 
         std::shared_ptr<Material> material{};
-
         // one material for one mesh
         if (shape.mesh.material_ids.size()) {
             int n = 0;
@@ -162,10 +125,10 @@ std::vector<std::shared_ptr<Mesh>> createMeshFromObjFile(
                 n++;
             }
             if (shape.mesh.material_ids[0] != -1) {
-                material = createMaterialFromObjFile(
+                material = createSimpleMaterialFromObjFile(
                     materials[shape.mesh.material_ids[0]], objParent);
             } else {
-                material = defaultMaterial;
+                material = SimpleMaterial::getDefault();
             }
         }
         for (const auto& idx : shape.mesh.indices) {

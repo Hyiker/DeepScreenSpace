@@ -91,7 +91,6 @@ void DSSApplication::loop() {
     logPossibleGLError();
     m_maincam.getViewMatrix(m_mvp.view);
     m_maincam.getProjectionMatrix(m_mvp.projection);
-    m_mvp.model = glm::identity<glm::mat4>();
 
     m_baseshader.use();
     m_baseshader.setUniform("uCameraPosition", m_maincam.getPosition());
