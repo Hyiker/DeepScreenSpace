@@ -22,6 +22,7 @@ target("DeepScreenSpace")
     before_build("windows", "linux", function (target) 
         local shader_src = path.join("$(projectdir)", "deepscreenspace", "shaders")
         local shader_target = path.join("$(projectdir)", "deepscreenspace", "include", "shaders")
+        local shader_inc = path.join("$(projectdir)", "loo", "shader")
         local glslc = "glslc.exe"
         local glslc_args = "-fauto-map-locations -fauto-bind-uniforms -fauto-combined-image-sampler --target-env=opengl"
 
@@ -59,7 +60,7 @@ static const std::vector<unsigned char> %s = {%s};
             local fn = path.filename(src)
             local spv_binary_fn = string.format("%s.spv", fn)
             local spv_binary = path.join(shader_target, spv_binary_fn)
-            local cmd = string.format(string.format("glslc -I %s %s -o %s %s", shader_src, src,
+            local cmd = string.format(string.format("glslc -I %s %s -o %s %s", shader_inc, src,
              spv_binary, glslc_args))
             
             cprintf("${yellow}$ ${clear}%s\n", cmd)

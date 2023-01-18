@@ -51,20 +51,7 @@ size_t Mesh::countVertex() const { return vertices.size(); }
 void Mesh::draw(ShaderProgram& sp) const {
     glBindVertexArray(vao);
     // bind material uniforms
-    material->bind();
-    auto simpleMaterial = dynamic_pointer_cast<SimpleMaterial>(material);
-    if (simpleMaterial->ambientTex)
-        sp.setTexture("ambientTex", 0, simpleMaterial->ambientTex->getId());
-    if (simpleMaterial->diffuseTex)
-        sp.setTexture("diffuseTex", 1, simpleMaterial->diffuseTex->getId());
-    if (simpleMaterial->specularTex)
-        sp.setTexture("specularTex", 2, simpleMaterial->specularTex->getId());
-    if (simpleMaterial->displacementTex)
-        sp.setTexture("displacementTex", 3,
-                      simpleMaterial->displacementTex->getId());
-    if (simpleMaterial->normalTex)
-        sp.setTexture("normalTex", 4, simpleMaterial->normalTex->getId());
-
+    material->bind(sp);
     glDrawElements(GL_TRIANGLES, static_cast<GLuint>(indices.size()),
                    GL_UNSIGNED_INT, nullptr);
 

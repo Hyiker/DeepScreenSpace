@@ -262,6 +262,10 @@ void ShaderProgram::setTexture(const std::string& name, int index,
     setTexture(name, index, tex.getId(), tex.getType());
 }
 
+void ShaderProgram::setTexture(int unit, const Texture& tex) const {
+    glBindTextureUnit(unit, tex.getId());
+}
+
 ShaderProgram::~ShaderProgram() { glDeleteProgram(handle); }
 
 void ShaderProgram::use() const { glUseProgram(handle); }

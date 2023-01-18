@@ -13,7 +13,8 @@
 namespace loo {
 class LOO_EXPORT Material {
    public:
-    virtual void bind() = 0;
+    // setup uniforms and textures for shader program
+    virtual void bind(const ShaderProgram& sp) = 0;
 };
 struct LOO_EXPORT ShaderSimpleMaterial {
     // std140 pad vec3 to 4N(N = 4B)
@@ -36,6 +37,11 @@ struct LOO_EXPORT ShaderSimpleMaterial {
           illum(illum) {}
 };
 class LOO_EXPORT SimpleMaterial : public Material {
+    static const int AMBIENT_TEX_UNIT;
+    static const int DIFFUSE_TEX_UNIT;
+    static const int SPECULAR_TEX_UNIT;
+    static const int DISPLACEMENT_TEX_UNIT;
+    static const int NORMAL_TEX_UNIT;
     ShaderSimpleMaterial m_shadermaterial;
     static std::shared_ptr<SimpleMaterial> defaultMaterial;
     // global uniform buffer for SimpleMaterial
@@ -52,7 +58,7 @@ class LOO_EXPORT SimpleMaterial : public Material {
         }
     }
     static std::shared_ptr<SimpleMaterial> getDefault();
-    void bind() override;
+    void bind(const ShaderProgram& sp) override;
     std::shared_ptr<Texture> ambientTex{};
     std::shared_ptr<Texture> diffuseTex{};
     std::shared_ptr<Texture> displacementTex{};

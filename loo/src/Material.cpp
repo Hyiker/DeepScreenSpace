@@ -8,6 +8,7 @@
 #include "assimp/material.h"
 #include "assimp/types.h"
 #include "glm/fwd.hpp"
+#include "loo/Shader.hpp"
 namespace loo {
 using namespace std;
 using namespace glm;
@@ -68,8 +69,19 @@ std::shared_ptr<Material> createSimpleMaterialFromAssimp(
     return material;
 }
 
-void SimpleMaterial::bind() {
+void SimpleMaterial::bind(const ShaderProgram& sp) {
     SimpleMaterial::uniformBuffer->updateData(&m_shadermaterial);
+    sp.setTexture(AMBIENT_TEX_UNIT,
+                  ambientTex ? *ambientTex : Texture::getBlankTexture2D());
+    sp.setTexture(DIFFUSE_TEX_UNIT,
+                  diffuseTex ? *diffuseTex : Texture::getBlankTexture2D());
+    sp.setTexture(SPECULAR_TEX_UNIT,
+                  specularTex ? *specularTex : Texture::getBlankTexture2D());
+    sp.setTexture(DISPLACEMENT_TEX_UNIT, displacementTex
+                                             ? *displacementTex
+                                             : Texture::getBlankTexture2D());
+    sp.setTexture(NORMAL_TEX_UNIT,
+                  normalTex ? *normalTex : Texture::getBlankTexture2D());
 }
 
 shared_ptr<SimpleMaterial> SimpleMaterial::getDefault() {
@@ -82,5 +94,12 @@ shared_ptr<SimpleMaterial> SimpleMaterial::getDefault() {
 }
 shared_ptr<SimpleMaterial> SimpleMaterial::defaultMaterial = nullptr;
 unique_ptr<UniformBuffer> SimpleMaterial::uniformBuffer = nullptr;
+
+const int SimpleMaterial::AMBIENT_TEX_UNIT =
+    DEFAULT_SHADER_MATERIAL_BINGDING_PORT + 1,
+          SimpleMaterial::DIFFUSE_TEX_UNIT = AMBIENT_TEX_UNIT + 1,
+          SimpleMaterial::SPECULAR_TEX_UNIT = DIFFUSE_TEX_UNIT + 1,
+          SimpleMaterial::DISPLACEMENT_TEX_UNIT = SPECULAR_TEX_UNIT + 1,
+          SimpleMaterial::NORMAL_TEX_UNIT = DISPLACEMENT_TEX_UNIT + 1;
 
 }  // namespace loo

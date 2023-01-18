@@ -99,6 +99,8 @@ class LOO_EXPORT ShaderProgram {
     void setTexture(const std::string& name, int index, int texId,
                     GLenum texType = GL_TEXTURE_2D);
     void setTexture(const std::string& name, int index, const Texture& tex);
+    // opengl 4.5+ texture binding interface
+    void setTexture(int unit, const Texture& tex) const;
 
     ~ShaderProgram();
 

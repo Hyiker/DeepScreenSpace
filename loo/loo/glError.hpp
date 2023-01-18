@@ -22,6 +22,12 @@ namespace loo {
         LOG(ERROR) << "Error code " << e << ": " << errCode2String(e) \
                    << std::endl;                                      \
     }
+// throw a fatal when met possible opengl error
+#define panicPossibleGLError()                                        \
+    if (auto e = glGetError(); e != GL_NO_ERROR) {                    \
+        LOG(FATAL) << "Error code " << e << ": " << errCode2String(e) \
+                   << "; Exit now!" << std::endl;                     \
+    }
 #define NOT_IMPLEMENTED()                 \
     LOG(FATAL) << "Function " << __func__ \
                << "() hasn't been implemented yet!\n";
