@@ -75,7 +75,9 @@ DSSApplication::DSSApplication(int width, int height, const char* skyBoxPrefix)
                      Shader(SKYBOX_FRAG, GL_FRAGMENT_SHADER)},
       m_scene(),
       m_maincam(),
-      m_mvpbuffer(0, sizeof(MVP)) {
+      m_mvpbuffer(0, sizeof(MVP)),
+      m_lightsbuffer(SHADER_BINDING_LIGHTS,
+                     sizeof(ShaderLight) * SHADER_LIGHTS_MAX) {
     ifstream ifs("camera.txt");
     if (!ifs.fail()) {
         glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -103,6 +105,11 @@ DSSApplication::DSSApplication(int width, int height, const char* skyBoxPrefix)
                                    .build();
         m_skyboxtex = createTextureCubeMapFromFiles(skyboxFilenames);
     }
+    // scene light
+    {
+        m_lights.push_back(
+            createDirectionalLight(glm::vec3(1, 1, 0), glm::vec3(1, 1, 0)));
+    }
     logPossibleGLError();
 }
 void DSSApplication::gui() {
@@ -114,6 +121,8 @@ void DSSApplication::gui() {
     const GLubyte* version = glGetString(GL_VERSION);
     ImGui::Text("Renderer: %s", renderer);
     ImGui::Text("OpenGL Version: %s", version);
+    ImGui::SliderFloat3("Light 0 direction", (float*)&m_lights[0].direction, 0,
+                        1);
 
     ImGui::End();
 }
@@ -134,8 +143,14 @@ void DSSApplication::skybox() {
 void DSSApplication::scene() {
     m_maincam.getViewMatrix(m_mvp.view);
     m_maincam.getProjectionMatrix(m_mvp.projection);
-
+    logPossibleGLError();
     m_baseshader.use();
+
+    {
+        m_lightsbuffer.updateData(0, sizeof(ShaderLight) * m_lights.size(),
+                                  m_lights.data());
+        m_baseshader.setUniform("nLights", (int)m_lights.size());
+    }
     m_baseshader.setUniform("uCameraPosition", m_maincam.getPosition());
     logPossibleGLError();
 
@@ -165,7 +180,7 @@ void DSSApplication::keyboard() {
     }
 }
 void DSSApplication::mouse() {
-    glfwSetCursorPosCallback(getWindow(), mouseCallback);
+    // glfwSetCursorPosCallback(getWindow(), mouseCallback);
     glfwSetScrollCallback(getWindow(), scrollCallback);
 }
 void DSSApplication::loop() {

@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <loo/Application.hpp>
 #include <loo/Camera.hpp>
+#include <loo/Light.hpp>
 #include <loo/Quad.hpp>
 #include <loo/Scene.hpp>
 #include <loo/Shader.hpp>
@@ -12,6 +13,8 @@
 #include <loo/loo.hpp>
 #include <memory>
 #include <string>
+#include <vector>
+
 class DSSApplication : public loo::Application {
    public:
     DSSApplication(int width, int height, const char* skyBoxPrefix = nullptr);
@@ -42,6 +45,8 @@ class DSSApplication : public loo::Application {
     loo::Skybox m_skybox;
     loo::Camera m_maincam;
     loo::UniformBuffer m_mvpbuffer;
+    loo::UniformBuffer m_lightsbuffer;
+    std::vector<loo::ShaderLight> m_lights;
 };
 
 #endif /* DEEPSCREENSPACE_INCLUDE_DSSAPPLICATION_HPP */

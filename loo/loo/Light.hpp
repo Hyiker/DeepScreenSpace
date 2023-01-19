@@ -10,7 +10,8 @@ struct ShaderLight {
     // spot, point
     glm::vec4 position;
     // spot, directional
-    glm::vec4 orientation;
+    // directional base orientation (0, 1, 0)
+    glm::vec4 direction;
     // all
     glm::vec4 color;
     float intensity;
@@ -19,8 +20,9 @@ struct ShaderLight {
     float range;
     // spot
     float spotAngle;
+    int type;
     void setPosition(const glm::vec3& p) { position = glm::vec4(p, 1); }
-    void setOrientation(const glm::vec3& o) { orientation = glm::vec4(o, 1); }
+    void setDirection(const glm::vec3& d);
     void setColor(const glm::vec3& c) { color = glm::vec4(c, 1); }
 };
 // TODO
@@ -31,9 +33,8 @@ struct ShaderLight {
 // ShaderLight createPointLight(const glm::vec3& p, const glm::vec3& c,
 //                              float intensity = 1.0, float range = -1.0);
 
-// ShaderLight createDirectionalLight(const glm::vec3& p, const glm::vec3& o,
-//                                    const glm::vec3& c, float intensity
-//                                    = 1.0);
+ShaderLight createDirectionalLight(const glm::vec3& d, const glm::vec3& c,
+                                   float intensity = 1.0);
 }  // namespace loo
 
 #endif /* LOO_LOO_LIGHT_HPP */

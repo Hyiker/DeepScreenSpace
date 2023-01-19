@@ -160,8 +160,7 @@ GLint ShaderProgram::uniform(const std::string& name) {
         // uniform that is not referenced
         GLint r = glGetUniformLocation(handle, name.c_str());
         if (r == GL_INVALID_OPERATION || r < 0)
-            cout << "[Error] uniform " << name << " doesn't exist in program"
-                 << endl;
+            LOG(ERROR) << "Uniform " << name << " doesn't exist in program";
         // add it anyways
         uniforms[name] = r;
 
@@ -173,8 +172,7 @@ GLint ShaderProgram::uniform(const std::string& name) {
 GLint ShaderProgram::attribute(const std::string& name) {
     GLint attrib = glGetAttribLocation(handle, name.c_str());
     if (attrib == GL_INVALID_OPERATION || attrib < 0)
-        cout << "[Error] Attribute " << name << " doesn't exist in program"
-             << endl;
+        LOG(ERROR) << "Attribute " << name << " doesn't exist in program";
 
     return attrib;
 }
