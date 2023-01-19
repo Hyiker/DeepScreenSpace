@@ -69,6 +69,7 @@ static const std::vector<unsigned char> %s = {%s};
             
             cpp_target = path.join(shader_target, string.format("%s.hpp", fn))
             hex2cpp(spv_binary, cpp_target, string.upper(fn:gsub("%.", "_")))
+            os.rm(spv_binary)
             cprintf("${bright green}[INFO] ${clear}%s generated\n", cpp_target)
         end
 
