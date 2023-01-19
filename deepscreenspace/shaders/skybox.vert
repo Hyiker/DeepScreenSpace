@@ -12,6 +12,5 @@ mvp;
 
 void main() {
     vTexCoord = aPos;
-    vec4 pos = mvp.projection * mvp.view * vec4(aPos, 1.0);
-    gl_Position = pos.xyzw;
+    gl_Position = (mvp.projection * mvp.view * vec4(aPos, 1.0)).xyww;
 }

@@ -24,6 +24,11 @@ class DSSApplication : public loo::Application {
    private:
     void loop() override;
     void gui();
+    void scene();
+    void skybox();
+    void clear();
+    void keyboard();
+    void mouse();
     struct MVP {
         glm::mat4 model;
         glm::mat4 view;

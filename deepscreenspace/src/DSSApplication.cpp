@@ -118,38 +118,39 @@ void DSSApplication::gui() {
     ImGui::End();
 }
 
-void DSSApplication::loop() {
-    m_maincam.m_aspect = getWindowRatio();
-    // render
-    glEnable(GL_DEPTH_TEST);
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    logPossibleGLError();
-    glm::mat4 view;
-    m_maincam.getViewMatrix(view);
-    m_maincam.getProjectionMatrix(m_mvp.projection);
-
+void DSSApplication::skybox() {
     if (m_skyboxtex) {
-        glDepthMask(GL_FALSE);
+        glDepthFunc(GL_LEQUAL);
+        glm::mat4 view;
+        m_maincam.getViewMatrix(view);
         m_skyboxshader.use();
         m_mvp.view = glm::mat4(glm::mat3(view));
         m_mvpbuffer.updateData(0, sizeof(MVP), &m_mvp);
         m_skyboxshader.setTexture(SHADER_BINDING_PORT_SKYBOX, *m_skyboxtex);
         m_skybox.draw();
-        glDepthMask(GL_TRUE);
+        glDepthFunc(GL_LESS);
     }
-    m_mvp.view = view;
+}
+void DSSApplication::scene() {
+    m_maincam.getViewMatrix(m_mvp.view);
+    m_maincam.getProjectionMatrix(m_mvp.projection);
+
     m_baseshader.use();
     m_baseshader.setUniform("uCameraPosition", m_maincam.getPosition());
     logPossibleGLError();
 
-    // m_scene.draw(m_baseshader, [this](const auto& scene, const auto& mesh) {
-    //     m_mvp.model = scene.getModelMatrix() * mesh.m_objmat;
-    //     m_mvpbuffer.updateData(0, sizeof(MVP), &m_mvp);
-    // });
+    m_scene.draw(m_baseshader, [this](const auto& scene, const auto& mesh) {
+        m_mvp.model = scene.getModelMatrix() * mesh.m_objmat;
+        m_mvpbuffer.updateData(0, sizeof(MVP), &m_mvp);
+    });
     logPossibleGLError();
-    // cam
+}
+void DSSApplication::clear() {
+    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    logPossibleGLError();
+}
+void DSSApplication::keyboard() {
     if (keyForward())
         m_maincam.processKeyboard(CameraMovement::FORWARD, getFrameDeltaTime());
     if (keyBackward())
@@ -159,11 +160,30 @@ void DSSApplication::loop() {
         m_maincam.processKeyboard(CameraMovement::LEFT, getFrameDeltaTime());
     if (keyRight())
         m_maincam.processKeyboard(CameraMovement::RIGHT, getFrameDeltaTime());
-
-    // gui
-    this->gui();
+    if (glfwGetKey(getWindow(), GLFW_KEY_R)) {
+        m_maincam = Camera();
+    }
+}
+void DSSApplication::mouse() {
     glfwSetCursorPosCallback(getWindow(), mouseCallback);
     glfwSetScrollCallback(getWindow(), scrollCallback);
+}
+void DSSApplication::loop() {
+    m_maincam.m_aspect = getWindowRatio();
+    // render
+    glEnable(GL_DEPTH_TEST);
+
+    clear();
+
+    scene();
+
+    skybox();
+
+    keyboard();
+
+    mouse();
+
+    gui();
 }
 
 void DSSApplication::afterCleanup() {
