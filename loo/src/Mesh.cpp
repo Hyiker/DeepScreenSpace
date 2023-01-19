@@ -67,7 +67,7 @@ static std::shared_ptr<Mesh> processAssimpMesh(
     // data to fill
     vector<Vertex> vertices;
     vector<unsigned int> indices;
-    vector<Texture> textures;
+    vector<Texture2D> textures;
     unordered_map<Vertex, unsigned int> uniqueVertices;
 
     // walk through each of the mesh's vertices

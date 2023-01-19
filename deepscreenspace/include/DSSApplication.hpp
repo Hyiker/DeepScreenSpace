@@ -7,13 +7,14 @@
 #include <loo/Quad.hpp>
 #include <loo/Scene.hpp>
 #include <loo/Shader.hpp>
+#include <loo/Skybox.hpp>
 #include <loo/UniformBuffer.hpp>
 #include <loo/loo.hpp>
 #include <memory>
 #include <string>
 class DSSApplication : public loo::Application {
    public:
-    DSSApplication(int width, int height);
+    DSSApplication(int width, int height, const char* skyBoxPrefix = nullptr);
     // only load model
     void loadModel(const std::string& filename, float scaling = 1.0);
     void loadGLTF(const std::string& filename);
@@ -30,8 +31,10 @@ class DSSApplication : public loo::Application {
     };
     MVP m_mvp;
 
-    loo::ShaderProgram m_baseshader;
+    loo::ShaderProgram m_baseshader, m_skyboxshader;
     loo::Scene m_scene;
+    std::shared_ptr<loo::TextureCubeMap> m_skyboxtex{};
+    loo::Skybox m_skybox;
     loo::Camera m_maincam;
     loo::UniformBuffer m_mvpbuffer;
 };

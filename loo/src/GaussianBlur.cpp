@@ -29,7 +29,7 @@ void GaussianBlur::init(GLenum internalformat, GLenum format, GLenum type) {
     m_fbs[1].attachTexture(m_texs[1], GL_COLOR_ATTACHMENT0, 0);
 }
 
-void GaussianBlur::blur(Texture& tex, int blurKerSize) {
+void GaussianBlur::blur(Texture2D& tex, int blurKerSize) {
     m_fbs[0].bind();
     glDisable(GL_DEPTH_TEST);
     glViewport(0, 0, m_width, m_height);

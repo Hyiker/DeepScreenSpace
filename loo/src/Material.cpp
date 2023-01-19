@@ -13,21 +13,21 @@ namespace loo {
 using namespace std;
 using namespace glm;
 namespace fs = std::filesystem;
-static unordered_map<string, shared_ptr<Texture>> uniqueTexture;
+static unordered_map<string, shared_ptr<Texture2D>> uniqueTexture;
 
 static inline glm::vec3 aiColor3D2Glm(const aiColor3D& aColor) {
     return {aColor.r, aColor.g, aColor.b};
 }
 
-static shared_ptr<Texture> createMaterialTextures(const aiMaterial* mat,
-                                                  aiTextureType type,
-                                                  fs::path objParent) {
-    vector<Texture> textures;
+static shared_ptr<Texture2D> createMaterialTextures(const aiMaterial* mat,
+                                                    aiTextureType type,
+                                                    fs::path objParent) {
+    vector<Texture2D> textures;
     if (mat->GetTextureCount(type)) {
         aiString str;
         mat->GetTexture(type, 0, &str);
-        return createTextureFromFile(uniqueTexture,
-                                     (objParent / str.data).string());
+        return createTexture2DFromFile(uniqueTexture,
+                                       (objParent / str.data).string());
     } else {
         return nullptr;
     }
@@ -71,17 +71,17 @@ std::shared_ptr<Material> createSimpleMaterialFromAssimp(
 
 void SimpleMaterial::bind(const ShaderProgram& sp) {
     SimpleMaterial::uniformBuffer->updateData(&m_shadermaterial);
-    sp.setTexture(AMBIENT_TEX_UNIT,
-                  ambientTex ? *ambientTex : Texture::getBlankTexture2D());
-    sp.setTexture(DIFFUSE_TEX_UNIT,
-                  diffuseTex ? *diffuseTex : Texture::getBlankTexture2D());
-    sp.setTexture(SPECULAR_TEX_UNIT,
-                  specularTex ? *specularTex : Texture::getBlankTexture2D());
-    sp.setTexture(DISPLACEMENT_TEX_UNIT, displacementTex
-                                             ? *displacementTex
-                                             : Texture::getBlankTexture2D());
-    sp.setTexture(NORMAL_TEX_UNIT,
-                  normalTex ? *normalTex : Texture::getBlankTexture2D());
+    sp.setTexture(SHADER_BINDING_PORT_SM_AMBIENT,
+                  ambientTex ? *ambientTex : Texture2D::getBlankTexture());
+    sp.setTexture(SHADER_BINDING_PORT_SM_DIFFUSE,
+                  diffuseTex ? *diffuseTex : Texture2D::getBlankTexture());
+    sp.setTexture(SHADER_BINDING_PORT_SM_SPECULAR,
+                  specularTex ? *specularTex : Texture2D::getBlankTexture());
+    sp.setTexture(
+        SHADER_BINDING_PORT_SM_DISPLACEMENT,
+        displacementTex ? *displacementTex : Texture2D::getBlankTexture());
+    sp.setTexture(SHADER_BINDING_PORT_SM_NORMAL,
+                  normalTex ? *normalTex : Texture2D::getBlankTexture());
 }
 
 shared_ptr<SimpleMaterial> SimpleMaterial::getDefault() {
@@ -94,12 +94,5 @@ shared_ptr<SimpleMaterial> SimpleMaterial::getDefault() {
 }
 shared_ptr<SimpleMaterial> SimpleMaterial::defaultMaterial = nullptr;
 unique_ptr<UniformBuffer> SimpleMaterial::uniformBuffer = nullptr;
-
-const int SimpleMaterial::AMBIENT_TEX_UNIT =
-    DEFAULT_SHADER_MATERIAL_BINGDING_PORT + 1,
-          SimpleMaterial::DIFFUSE_TEX_UNIT = AMBIENT_TEX_UNIT + 1,
-          SimpleMaterial::SPECULAR_TEX_UNIT = DIFFUSE_TEX_UNIT + 1,
-          SimpleMaterial::DISPLACEMENT_TEX_UNIT = SPECULAR_TEX_UNIT + 1,
-          SimpleMaterial::NORMAL_TEX_UNIT = DISPLACEMENT_TEX_UNIT + 1;
 
 }  // namespace loo

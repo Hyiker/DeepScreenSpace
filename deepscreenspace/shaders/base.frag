@@ -16,6 +16,6 @@ void main() {
     vec3 H = (V + L) / 2.0;
 
     // vec3 Ld = simpleMaterial.diffuse.rgb * max(dot(L, vNormal), 0.0);
-    vec3 Ld = texture(normalTex, vTexCoord).rgb;
+    vec3 Ld = texture(diffuseTex, vTexCoord).rgb;
     FragColor = vec4(Ld, 1.0);
 }

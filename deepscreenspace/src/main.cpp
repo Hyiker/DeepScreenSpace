@@ -26,15 +26,16 @@ void loadScene(DSSApplication& app, const char* filename, float scaling) {
 }
 
 int main(int argc, char* argv[]) {
-    loo::LooBasicConfigs conf;
-    loo::initialize(argv[0], &conf);
-    DSSApplication app(1920, 1280);
+    loo::initialize(argv[0]);
 
     if (argc < 2) LOG(FATAL) << "Bad argument count\n";
     float scaling = 1.0;
     if (argc >= 3) {
         scaling = std::stof(argv[2]);
     }
+    const char* skyboxPath{};
+    if (argc >= 4) skyboxPath = argv[3];
+    DSSApplication app(1920, 1280, skyboxPath);
     loadScene(app, argv[1], scaling);
     app.run();
 }

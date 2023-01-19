@@ -42,7 +42,7 @@ class Framebuffer {
 
     void bind() { glBindFramebuffer(GL_FRAMEBUFFER, m_fbo); }
     void unbind() { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
-    void attachTexture(const Texture& tex, GLenum attachment, GLint level) {
+    void attachTexture(const Texture2D& tex, GLenum attachment, GLint level) {
         bind();
         tex.bind();
         glFramebufferTexture(GL_FRAMEBUFFER, attachment, tex.getId(), level);

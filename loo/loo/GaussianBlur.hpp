@@ -13,7 +13,7 @@ class LOO_EXPORT GaussianBlur {
     Quad m_quad;
     ShaderProgram m_shader;
     Framebuffer m_fbs[2];
-    Texture m_texs[2];
+    Texture2D m_texs[2];
     GLsizei m_width, m_height;
 
    public:
@@ -25,7 +25,7 @@ class LOO_EXPORT GaussianBlur {
      * @param tex input Texture
      * @param blurKerSize 5, 9, 13
      */
-    void blur(Texture& tex, int blurKerSize = 5);
+    void blur(Texture2D& tex, int blurKerSize = 5);
 };
 }  // namespace loo
 

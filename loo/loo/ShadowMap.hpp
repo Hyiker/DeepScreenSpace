@@ -12,7 +12,7 @@ namespace loo {
 
 class LOO_EXPORT ShadowMap {
     // MSM
-    Texture m_moments;
+    Texture2D m_moments;
     Framebuffer m_framebuffer;
     Renderbuffer m_renderbuffer;
     ShaderProgram m_shader;
@@ -29,7 +29,7 @@ class LOO_EXPORT ShadowMap {
     void init();
     void render(const Scene& scene, glm::vec3 sunPosition);
     void blur();
-    const Texture& getDepthTexture() const { return m_moments; }
+    const Texture2D& getDepthTexture() const { return m_moments; }
 };
 
 }  // namespace loo

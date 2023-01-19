@@ -13,6 +13,8 @@
 #include "glm/fwd.hpp"
 #include "shaders/base.frag.hpp"
 #include "shaders/base.vert.hpp"
+#include "shaders/skybox.frag.hpp"
+#include "shaders/skybox.vert.hpp"
 using namespace loo;
 using namespace std;
 
@@ -65,10 +67,12 @@ void DSSApplication::loadGLTF(const std::string& filename) {
     LOG(INFO) << "Load done" << endl;
 }
 
-DSSApplication::DSSApplication(int width, int height)
+DSSApplication::DSSApplication(int width, int height, const char* skyBoxPrefix)
     : Application(width, height),
       m_baseshader{Shader(BASE_VERT, GL_VERTEX_SHADER),
                    Shader(BASE_FRAG, GL_FRAGMENT_SHADER)},
+      m_skyboxshader{Shader(SKYBOX_VERT, GL_VERTEX_SHADER),
+                     Shader(SKYBOX_FRAG, GL_FRAGMENT_SHADER)},
       m_scene(),
       m_maincam(),
       m_mvpbuffer(0, sizeof(MVP)) {
@@ -86,6 +90,19 @@ DSSApplication::DSSApplication(int width, int height)
         m_maincam = Camera(position, up, yaw, pitch, aspect);
     }
     ifs.close();
+    if (skyBoxPrefix) {
+        // skybox setup
+        auto skyboxFilenames = TextureCubeMap::builder()
+                                   .front("front")
+                                   .back("back")
+                                   .left("left")
+                                   .right("right")
+                                   .top("top")
+                                   .bottom("bottom")
+                                   .prefix(skyBoxPrefix)
+                                   .build();
+        m_skyboxtex = createTextureCubeMapFromFiles(skyboxFilenames);
+    }
     logPossibleGLError();
 }
 void DSSApplication::gui() {
@@ -109,17 +126,28 @@ void DSSApplication::loop() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     logPossibleGLError();
-    m_maincam.getViewMatrix(m_mvp.view);
+    glm::mat4 view;
+    m_maincam.getViewMatrix(view);
     m_maincam.getProjectionMatrix(m_mvp.projection);
 
+    if (m_skyboxtex) {
+        glDepthMask(GL_FALSE);
+        m_skyboxshader.use();
+        m_mvp.view = glm::mat4(glm::mat3(view));
+        m_mvpbuffer.updateData(0, sizeof(MVP), &m_mvp);
+        m_skyboxshader.setTexture(SHADER_BINDING_PORT_SKYBOX, *m_skyboxtex);
+        m_skybox.draw();
+        glDepthMask(GL_TRUE);
+    }
+    m_mvp.view = view;
     m_baseshader.use();
     m_baseshader.setUniform("uCameraPosition", m_maincam.getPosition());
     logPossibleGLError();
 
-    m_scene.draw(m_baseshader, [this](const auto& scene, const auto& mesh) {
-        m_mvp.model = scene.getModelMatrix() * mesh.m_objmat;
-        m_mvpbuffer.updateData(0, sizeof(MVP), &m_mvp);
-    });
+    // m_scene.draw(m_baseshader, [this](const auto& scene, const auto& mesh) {
+    //     m_mvp.model = scene.getModelMatrix() * mesh.m_objmat;
+    //     m_mvpbuffer.updateData(0, sizeof(MVP), &m_mvp);
+    // });
     logPossibleGLError();
     // cam
     if (keyForward())

@@ -37,11 +37,6 @@ struct LOO_EXPORT ShaderSimpleMaterial {
           illum(illum) {}
 };
 class LOO_EXPORT SimpleMaterial : public Material {
-    static const int AMBIENT_TEX_UNIT;
-    static const int DIFFUSE_TEX_UNIT;
-    static const int SPECULAR_TEX_UNIT;
-    static const int DISPLACEMENT_TEX_UNIT;
-    static const int NORMAL_TEX_UNIT;
     ShaderSimpleMaterial m_shadermaterial;
     static std::shared_ptr<SimpleMaterial> defaultMaterial;
     // global uniform buffer for SimpleMaterial
@@ -54,17 +49,17 @@ class LOO_EXPORT SimpleMaterial : public Material {
         : m_shadermaterial(ambient, diffuse, specular, shininess, ior, illum) {
         if (SimpleMaterial::uniformBuffer == nullptr) {
             SimpleMaterial::uniformBuffer = std::make_unique<UniformBuffer>(
-                shaderMaterialBindingPort, sizeof(ShaderSimpleMaterial));
+                SHADER_BINDING_PORT_SM_PARAMS, sizeof(ShaderSimpleMaterial));
         }
     }
     static std::shared_ptr<SimpleMaterial> getDefault();
     void bind(const ShaderProgram& sp) override;
-    std::shared_ptr<Texture> ambientTex{};
-    std::shared_ptr<Texture> diffuseTex{};
-    std::shared_ptr<Texture> displacementTex{};
-    std::shared_ptr<Texture> normalTex{};
-    std::shared_ptr<Texture> specularTex{};
-    std::shared_ptr<Texture> alphaTex{};
+    std::shared_ptr<Texture2D> ambientTex{};
+    std::shared_ptr<Texture2D> diffuseTex{};
+    std::shared_ptr<Texture2D> displacementTex{};
+    std::shared_ptr<Texture2D> normalTex{};
+    std::shared_ptr<Texture2D> specularTex{};
+    std::shared_ptr<Texture2D> alphaTex{};
 };
 std::shared_ptr<Material> createSimpleMaterialFromAssimp(
     const aiMaterial* aMaterial, std::filesystem::path objParent);
