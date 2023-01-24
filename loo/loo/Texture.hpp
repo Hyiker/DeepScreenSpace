@@ -103,7 +103,8 @@ class LOO_EXPORT Texture {
 };
 
 class Texture2D : public Texture<GL_TEXTURE_2D> {
-    static Texture2D blankTexture;
+    static Texture2D whiteTexture;
+    static Texture2D blackTexture;
 
    public:
     void setup(GLsizei width, GLsizei height, GLenum internalformat,
@@ -113,7 +114,8 @@ class Texture2D : public Texture<GL_TEXTURE_2D> {
     void setup(unsigned char* data, GLsizei width, GLsizei height,
                GLenum internalformat, GLenum format, GLenum type,
                GLint maxLevel = -1);
-    static const Texture2D& getBlankTexture();
+    static const Texture2D& getWhiteTexture();
+    static const Texture2D& getBlackTexture();
 };
 LOO_EXPORT std::shared_ptr<Texture2D> createTexture2DFromFile(
     std::unordered_map<std::string, std::shared_ptr<Texture2D>>& uniqueTexture,

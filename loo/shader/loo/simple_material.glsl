@@ -16,4 +16,6 @@ layout(binding = 4) uniform sampler2D diffuseTex;
 layout(binding = 5) uniform sampler2D specularTex;
 layout(binding = 6) uniform sampler2D displacementTex;
 layout(binding = 7) uniform sampler2D normalTex;
+layout(binding = 8) uniform sampler2D opacityTex;
+layout(binding = 9) uniform sampler2D heightTex;
 // clang-format on

@@ -51,7 +51,6 @@ std::shared_ptr<Material> createSimpleMaterialFromAssimp(
 
     auto material = make_shared<SimpleMaterial>(ambient, diffuse, specular,
                                                 shininess, ior, illum);
-
     material->ambientTex =
         createMaterialTextures(aMaterial, aiTextureType_AMBIENT, objParent);
 
@@ -63,25 +62,33 @@ std::shared_ptr<Material> createSimpleMaterialFromAssimp(
 
     material->displacementTex = createMaterialTextures(
         aMaterial, aiTextureType_DISPLACEMENT, objParent);
-
     material->normalTex =
         createMaterialTextures(aMaterial, aiTextureType_NORMALS, objParent);
+
+    material->opacityTex =
+        createMaterialTextures(aMaterial, aiTextureType_OPACITY, objParent);
+    material->heightTex =
+        createMaterialTextures(aMaterial, aiTextureType_HEIGHT, objParent);
     return material;
 }
 
 void SimpleMaterial::bind(const ShaderProgram& sp) {
     SimpleMaterial::uniformBuffer->updateData(&m_shadermaterial);
     sp.setTexture(SHADER_BINDING_PORT_SM_AMBIENT,
-                  ambientTex ? *ambientTex : Texture2D::getBlankTexture());
+                  ambientTex ? *ambientTex : Texture2D::getWhiteTexture());
     sp.setTexture(SHADER_BINDING_PORT_SM_DIFFUSE,
-                  diffuseTex ? *diffuseTex : Texture2D::getBlankTexture());
+                  diffuseTex ? *diffuseTex : Texture2D::getWhiteTexture());
     sp.setTexture(SHADER_BINDING_PORT_SM_SPECULAR,
-                  specularTex ? *specularTex : Texture2D::getBlankTexture());
+                  specularTex ? *specularTex : Texture2D::getWhiteTexture());
     sp.setTexture(
         SHADER_BINDING_PORT_SM_DISPLACEMENT,
-        displacementTex ? *displacementTex : Texture2D::getBlankTexture());
+        displacementTex ? *displacementTex : Texture2D::getBlackTexture());
     sp.setTexture(SHADER_BINDING_PORT_SM_NORMAL,
-                  normalTex ? *normalTex : Texture2D::getBlankTexture());
+                  normalTex ? *normalTex : Texture2D::getBlackTexture());
+    sp.setTexture(SHADER_BINDING_PORT_SM_OPACITY,
+                  opacityTex ? *opacityTex : Texture2D::getBlackTexture());
+    sp.setTexture(SHADER_BINDING_PORT_SM_HEIGHT,
+                  heightTex ? *heightTex : Texture2D::getBlackTexture());
 }
 
 shared_ptr<SimpleMaterial> SimpleMaterial::getDefault() {

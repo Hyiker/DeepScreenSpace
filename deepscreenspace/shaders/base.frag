@@ -20,8 +20,7 @@ void main() {
         vec3 L, H;
         switch (light.type) {
             case LIGHT_TYPE_DIRECTIONAL:
-                L = lights[0].direction.xyz;
-                L *= dot(L, vNormal) < 0 ? -1 : 1;
+                L = normalize(-lights[0].direction.xyz);
                 H = (V + L) / 2.0;
 
                 break;

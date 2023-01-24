@@ -14,7 +14,7 @@ using namespace std;
 static unsigned char* readImageFromFile(const std::string& filename, int* width,
                                         int* height, GLenum* imgfmt,
                                         GLenum* internalFmt) {
-    int ncomp;
+    int ncomp = 0;
     stbi_set_flip_vertically_on_load(false);
     // TODO: request a desired comp
     unsigned char* data = stbi_load(filename.c_str(), width, height, &ncomp, 0);
@@ -24,14 +24,22 @@ static unsigned char* readImageFromFile(const std::string& filename, int* width,
     }
     switch (ncomp) {
         case 1:
+            // grey
             *imgfmt = GL_RED;
             *internalFmt = GL_R8;
             break;
+        case 2:
+            // grey, alpha
+            *imgfmt = GL_RG;
+            *internalFmt = GL_RG8;
+            break;
         case 3:
+            // rgb
             *imgfmt = GL_RGB;
             *internalFmt = GL_RGB8;
             break;
         case 4:
+            // rgba
             *imgfmt = GL_RGBA;
             *internalFmt = GL_RGBA8;
             break;
@@ -101,18 +109,30 @@ void Texture2D::setup(unsigned char* data, GLsizei width, GLsizei height,
 #endif
 }
 
-Texture2D Texture2D::blankTexture = Texture2D();
+Texture2D Texture2D::whiteTexture = Texture2D();
+Texture2D Texture2D::blackTexture = Texture2D();
 
-const Texture2D& Texture2D::getBlankTexture() {
-    if (blankTexture.getId() == GL_INVALID_INDEX) {
-        blankTexture.init();
+const Texture2D& Texture2D::getWhiteTexture() {
+    if (whiteTexture.getId() == GL_INVALID_INDEX) {
+        whiteTexture.init();
         unsigned char whiteData[] = {255, 255, 255};
-        blankTexture.setup(whiteData, 1, 1, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE,
+        whiteTexture.setup(whiteData, 1, 1, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE,
                            1);
-        blankTexture.setSizeFilter(GL_LINEAR, GL_LINEAR);
-        blankTexture.setWrapFilter(GL_REPEAT);
+        whiteTexture.setSizeFilter(GL_LINEAR, GL_LINEAR);
+        whiteTexture.setWrapFilter(GL_REPEAT);
     }
-    return Texture2D::blankTexture;
+    return Texture2D::whiteTexture;
+}
+const Texture2D& Texture2D::getBlackTexture() {
+    if (blackTexture.getId() == GL_INVALID_INDEX) {
+        blackTexture.init();
+        unsigned char blackData[] = {0, 0, 0};
+        blackTexture.setup(blackData, 1, 1, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE,
+                           1);
+        blackTexture.setSizeFilter(GL_LINEAR, GL_LINEAR);
+        blackTexture.setWrapFilter(GL_REPEAT);
+    }
+    return Texture2D::blackTexture;
 }
 
 vector<string> TextureCubeMap::TextureCubeMapBuilder::build() {

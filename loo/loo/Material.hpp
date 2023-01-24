@@ -59,7 +59,8 @@ class LOO_EXPORT SimpleMaterial : public Material {
     std::shared_ptr<Texture2D> displacementTex{};
     std::shared_ptr<Texture2D> normalTex{};
     std::shared_ptr<Texture2D> specularTex{};
-    std::shared_ptr<Texture2D> alphaTex{};
+    std::shared_ptr<Texture2D> opacityTex{};
+    std::shared_ptr<Texture2D> heightTex{};
 };
 std::shared_ptr<Material> createSimpleMaterialFromAssimp(
     const aiMaterial* aMaterial, std::filesystem::path objParent);

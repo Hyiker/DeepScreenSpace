@@ -24,6 +24,8 @@ constexpr int SHADER_BINDING_PORT_SM_DIFFUSE = 4;
 constexpr int SHADER_BINDING_PORT_SM_SPECULAR = 5;
 constexpr int SHADER_BINDING_PORT_SM_DISPLACEMENT = 6;
 constexpr int SHADER_BINDING_PORT_SM_NORMAL = 7;
+constexpr int SHADER_BINDING_PORT_SM_OPACITY = 8;
+constexpr int SHADER_BINDING_PORT_SM_HEIGHT = 9;
 
 // pbr material binding
 // TODO

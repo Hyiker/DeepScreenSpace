@@ -11,6 +11,7 @@
 #include "glm/ext/matrix_float4x4.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/fwd.hpp"
+#include "imgui_impl_glfw.h"
 #include "shaders/base.frag.hpp"
 #include "shaders/base.vert.hpp"
 #include "shaders/skybox.frag.hpp"
@@ -19,6 +20,7 @@ using namespace loo;
 using namespace std;
 
 static void mouseCallback(GLFWwindow* window, double xposIn, double yposIn) {
+    ImGui_ImplGlfw_CursorPosCallback(window, xposIn, yposIn);
     static bool firstMouse = true;
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE) {
         firstMouse = true;
@@ -108,7 +110,7 @@ DSSApplication::DSSApplication(int width, int height, const char* skyBoxPrefix)
     // scene light
     {
         m_lights.push_back(
-            createDirectionalLight(glm::vec3(1, 1, 0), glm::vec3(1, 1, 0)));
+            createDirectionalLight(glm::vec3(-1, -1, 0), glm::vec3(1, 1, 0)));
     }
     logPossibleGLError();
 }
@@ -121,8 +123,7 @@ void DSSApplication::gui() {
     const GLubyte* version = glGetString(GL_VERSION);
     ImGui::Text("Renderer: %s", renderer);
     ImGui::Text("OpenGL Version: %s", version);
-    ImGui::SliderFloat3("Light 0 direction", (float*)&m_lights[0].direction, 0,
-                        1);
+    ImGui::SliderFloat3("Sun", (float*)&m_lights[0].direction, -1, 1);
 
     ImGui::End();
 }
@@ -180,7 +181,7 @@ void DSSApplication::keyboard() {
     }
 }
 void DSSApplication::mouse() {
-    // glfwSetCursorPosCallback(getWindow(), mouseCallback);
+    glfwSetCursorPosCallback(getWindow(), mouseCallback);
     glfwSetScrollCallback(getWindow(), scrollCallback);
 }
 void DSSApplication::loop() {
