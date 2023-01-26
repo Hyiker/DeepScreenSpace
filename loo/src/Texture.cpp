@@ -16,10 +16,10 @@ static unsigned char* readImageFromFile(const std::string& filename, int* width,
                                         GLenum* internalFmt) {
     int ncomp = 0;
     stbi_set_flip_vertically_on_load(false);
-    // TODO: request a desired comp
     unsigned char* data = stbi_load(filename.c_str(), width, height, &ncomp, 0);
     if (!data) {
-        LOG(ERROR) << format("{}: bad filename", filename);
+        LOG(ERROR) << format("Parse {} failed: {}", filename,
+                             stbi_failure_reason());
         return nullptr;
     }
     switch (ncomp) {
@@ -53,10 +53,9 @@ static unsigned char* readImageFromFile(const std::string& filename, int* width,
 
 std::shared_ptr<Texture2D> createTexture2DFromFile(
     std::unordered_map<std::string, std::shared_ptr<Texture2D>>& uniqueTexture,
-    const std::string& filename) {
+    const std::string& filename, bool generateMipmap) {
     if (uniqueTexture.count(filename)) return uniqueTexture[filename];
     shared_ptr<Texture2D> tex = make_shared<Texture2D>();
-    LOG(INFO) << "2D Texture " << filename << " loaded.\n";
     int width, height;
     GLenum imgfmt, internalFmt;
 
@@ -69,16 +68,21 @@ std::shared_ptr<Texture2D> createTexture2DFromFile(
     logPossibleGLError();
     // attention, mismatch between internalformat and format may casue
     // GL_INVALID_OPERATION
-    tex->setup(data, width, height, internalFmt, imgfmt, GL_UNSIGNED_BYTE);
+    tex->setup(data, width, height, internalFmt, imgfmt, GL_UNSIGNED_BYTE,
+               generateMipmap ? -1 : 1);
     panicPossibleGLError();
-    tex->setSizeFilter(GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR);
+    if (generateMipmap)
+        tex->setSizeFilter(GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR);
+    else
+        tex->setSizeFilter(GL_LINEAR, GL_LINEAR);
     panicPossibleGLError();
     tex->setWrapFilter(GL_REPEAT);
     panicPossibleGLError();
-    tex->generateMipmap();
+    if (generateMipmap) tex->generateMipmap();
 
     stbi_image_free(data);
     uniqueTexture[filename] = tex;
+    LOG(INFO) << "2D Texture " << filename << " loaded.";
     return tex;
 }
 

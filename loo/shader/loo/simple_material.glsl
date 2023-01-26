@@ -6,9 +6,8 @@ layout(std140, binding = 2) uniform SimpleMaterial {
     vec4 diffuse;
     vec4 specular;
 
+    vec4 ior;
     float shininess;
-    float ior;
-    int illum;
 }
 simpleMaterial;
 layout(binding = 3) uniform sampler2D ambientTex;

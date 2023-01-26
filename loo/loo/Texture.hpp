@@ -119,7 +119,7 @@ class Texture2D : public Texture<GL_TEXTURE_2D> {
 };
 LOO_EXPORT std::shared_ptr<Texture2D> createTexture2DFromFile(
     std::unordered_map<std::string, std::shared_ptr<Texture2D>>& uniqueTexture,
-    const std::string& filename);
+    const std::string& filename, bool generateMipmap);
 
 class TextureCubeMap : public Texture<GL_TEXTURE_CUBE_MAP> {
    public:

@@ -20,7 +20,7 @@ class DSSApplication : public loo::Application {
     DSSApplication(int width, int height, const char* skyBoxPrefix = nullptr);
     // only load model
     void loadModel(const std::string& filename, float scaling = 1.0);
-    void loadGLTF(const std::string& filename);
+    void loadGLTF(const std::string& filename, float scaling = 1.0);
     loo::Camera& getCamera() { return m_maincam; }
     void afterCleanup() override;
 
@@ -36,6 +36,7 @@ class DSSApplication : public loo::Application {
         glm::mat4 model;
         glm::mat4 view;
         glm::mat4 projection;
+        glm::mat4 normalMatrix;
     };
     MVP m_mvp;
 
@@ -47,6 +48,10 @@ class DSSApplication : public loo::Application {
     loo::UniformBuffer m_mvpbuffer;
     loo::UniformBuffer m_lightsbuffer;
     std::vector<loo::ShaderLight> m_lights;
+    bool m_wireframe{};
+    bool m_enablenormal{true};
+    bool m_enableparallax{true};
+    // float m_displaceintensity{};
 };
 
 #endif /* DEEPSCREENSPACE_INCLUDE_DSSAPPLICATION_HPP */

@@ -5,9 +5,8 @@ layout(std140, binding = %SHADER_BINDING_PORT_PBRM_PARAMS%) uniform SimpleMateri
     vec4 diffuse;
     vec4 specular;
 
+    vec4 ior;
     float shininess;
-    float ior;
-    int illum;
 }
 simpleMaterial;
 layout(binding = %SHADER_BINDING_PORT_SM_AMBIENT%) uniform sampler2D ambientTex;

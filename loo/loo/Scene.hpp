@@ -34,9 +34,10 @@ class LOO_EXPORT Scene {
     void addMeshes(std::vector<std::shared_ptr<Mesh>>&& meshes);
 
     void draw(ShaderProgram& sp,
-              std::function<void(const Scene&, const Mesh&)> beforeDraw) const;
+              std::function<void(const Scene&, const Mesh&)> beforeDraw,
+              GLenum drawMode = GL_FILL) const;
 
-    void draw(ShaderProgram& sp) const;
+    void draw(ShaderProgram& sp, GLenum drawMode = GL_FILL) const;
     Scene();
 };
 

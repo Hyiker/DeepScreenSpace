@@ -13,13 +13,12 @@ void loadScene(DSSApplication& app, const char* filename, float scaling) {
     using namespace std;
     fs::path p(filename);
     auto suffix = p.extension();
-    if (suffix == ".obj") {
-        LOG(INFO) << "Loading model from .obj file" << endl;
+    if (suffix == ".obj" || suffix == ".fbx") {
+        LOG(INFO) << "Loading model from " << suffix << " file" << endl;
         app.loadModel(filename, scaling);
     } else if (suffix == ".gltf" || suffix == ".glb") {
         LOG(INFO) << "Loading scene from gltf file" << endl;
-        app.loadGLTF(filename);
-        exit(0);
+        app.loadGLTF(filename, scaling);
     } else {
         LOG(FATAL) << "Unrecognizable file extension " << suffix << endl;
     }

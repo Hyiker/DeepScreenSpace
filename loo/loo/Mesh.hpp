@@ -15,7 +15,11 @@ struct LOO_EXPORT Vertex {
     glm::vec3 position;
     glm::vec3 normal;
     glm::vec2 texCoord;
+    glm::vec3 tangent;
+    glm::vec3 bitangent;
     bool operator==(const Vertex& v) const;
+    // Re-orthogonalization tangents, modifies tangent and bitangent
+    void orthogonalizeTangent();
 };
 
 struct LOO_EXPORT Mesh {
@@ -37,7 +41,7 @@ struct LOO_EXPORT Mesh {
     GLuint vao, vbo, ebo;
     void prepare();
     size_t countVertex() const;
-    void draw(ShaderProgram& sp) const;
+    void draw(ShaderProgram& sp, GLenum drawMode = GL_FILL) const;
 };
 
 LOO_EXPORT std::vector<std::shared_ptr<Mesh>> createMeshFromFile(

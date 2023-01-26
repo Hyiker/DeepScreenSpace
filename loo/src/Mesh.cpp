@@ -11,11 +11,27 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+
 #define GLM_ENABLE_EXPERIMENTAL
 #include "glm/ext.hpp"
 namespace loo {
 using namespace std;
+using namespace glm;
 namespace fs = std::filesystem;
+
+void Vertex::orthogonalizeTangent() {
+    tangent = normalize(tangent);
+    normal = normalize(normal);
+    tangent = normalize(tangent - dot(tangent, normal) * normal);
+    auto B = cross(normal, tangent);
+    if (dot(B, bitangent) < 0) {
+        // flip bitangent if necessary
+        // THIS IS IMPORTANT
+        B = -B;
+    }
+    bitangent = B;
+}
+
 void Mesh::prepare() {
     glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);
@@ -43,12 +59,21 @@ void Mesh::prepare() {
                           (GLvoid*)offsetof(Vertex, texCoord));
     glEnableVertexAttribArray(2);
 
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                          (GLvoid*)(offsetof(Vertex, tangent)));
+    glEnableVertexAttribArray(3);
+
+    glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                          (GLvoid*)offsetof(Vertex, bitangent));
+    glEnableVertexAttribArray(4);
+
     glBindVertexArray(0);
 }
 
 size_t Mesh::countVertex() const { return vertices.size(); }
 
-void Mesh::draw(ShaderProgram& sp) const {
+void Mesh::draw(ShaderProgram& sp, GLenum drawMode) const {
+    glPolygonMode(GL_FRONT_AND_BACK, drawMode);
     glBindVertexArray(vao);
     // bind material uniforms
     material->bind(sp);
@@ -72,7 +97,7 @@ static std::shared_ptr<Mesh> processAssimpMesh(
 
     // walk through each of the mesh's vertices
     for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
-        Vertex vertex;
+        Vertex vertex{};
         glm::vec3 vector;  // we declare a placeholder vector since assimp uses
                            // its own vector class that doesn't directly convert
                            // to glm's vec3 class so we transfer the data to
@@ -90,9 +115,7 @@ static std::shared_ptr<Mesh> processAssimpMesh(
             vertex.normal = vector;
         }
         // texture coordinates
-        if (mesh->mTextureCoords[0])  // does the mesh contain texture
-                                      // coordinates?
-        {
+        if (mesh->mTextureCoords[0]) [[likely]] {
             glm::vec2 vec;
             // a vertex can contain up to 8 different texture coordinates. We
             // thus make the assumption that we won't use models where a vertex
@@ -101,16 +124,22 @@ static std::shared_ptr<Mesh> processAssimpMesh(
             vec.x = mesh->mTextureCoords[0][i].x;
             vec.y = mesh->mTextureCoords[0][i].y;
             vertex.texCoord = vec;
-            // tangent
-            // vector.x = mesh->mTangents[i].x;
-            // vector.y = mesh->mTangents[i].y;
-            // vector.z = mesh->mTangents[i].z;
-            // vertex.Tangent = vector;
-            // bitangent
-            // vector.x = mesh->mBitangents[i].x;
-            // vector.y = mesh->mBitangents[i].y;
-            // vector.z = mesh->mBitangents[i].z;
-            // vertex.Bitangent = vector;
+            if (mesh->mTangents) [[likely]] {
+                // tangent
+                vector.x = mesh->mTangents[i].x;
+                vector.y = mesh->mTangents[i].y;
+                vector.z = mesh->mTangents[i].z;
+                vertex.tangent = vector;
+                // bitangent
+                vector.x = mesh->mBitangents[i].x;
+                vector.y = mesh->mBitangents[i].y;
+                vector.z = mesh->mBitangents[i].z;
+                vertex.bitangent = vector;
+
+                // re-smoothing tangents
+                // https://github.com/assimp/assimp/issues/3191
+                vertex.orthogonalizeTangent();
+            }
         } else
             vertex.texCoord = glm::vec2(0.0f, 0.0f);
 
@@ -159,9 +188,10 @@ vector<shared_ptr<Mesh>> createMeshFromFile(const string& filename,
     vector<shared_ptr<Mesh>> meshes;
     fs::path filePath(filename);
     fs::path fileParent = filePath.parent_path();
-    const auto scene =
-        importer.ReadFile(filename, aiProcess_Triangulate | aiProcess_FlipUVs |
-                                        aiProcess_GenNormals);
+    const auto scene = importer.ReadFile(
+        filename, aiProcess_Triangulate | aiProcess_FlipUVs |
+                      aiProcess_GenNormals | aiProcess_GenNormals |
+                      aiProcess_CalcTangentSpace);
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
         !scene->mRootNode) {
         LOG(ERROR) << "Assimp: " << importer.GetErrorString() << endl;
@@ -174,6 +204,7 @@ vector<shared_ptr<Mesh>> createMeshFromFile(const string& filename,
 
 bool Vertex::operator==(const Vertex& v) const {
     return position == v.position && normal == v.normal &&
-           texCoord == v.texCoord;
+           texCoord == v.texCoord && tangent == v.tangent &&
+           bitangent == v.bitangent;
 }
 }  // namespace loo

@@ -62,10 +62,15 @@ void DSSApplication::loadModel(const std::string& filename, float scaling) {
     LOG(INFO) << "Load done" << endl;
 }
 
-void DSSApplication::loadGLTF(const std::string& filename) {
+void DSSApplication::loadGLTF(const std::string& filename, float scaling) {
     LOG(INFO) << "Loading scene from " << filename << endl;
-    m_scene = createSceneFromFile(filename);
-    // m_scene->prepare();
+    // TODO: m_scene = createSceneFromFile(filename);
+    glm::mat4 transform = glm::scale(glm::identity<glm::mat4>(),
+                                     glm::vec3(scaling, scaling, scaling));
+    auto meshes = createMeshFromFile(filename, transform);
+    m_scene.addMeshes(std::move(meshes));
+
+    m_scene.prepare();
     LOG(INFO) << "Load done" << endl;
 }
 
@@ -123,14 +128,26 @@ void DSSApplication::gui() {
     const GLubyte* version = glGetString(GL_VERSION);
     ImGui::Text("Renderer: %s", renderer);
     ImGui::Text("OpenGL Version: %s", version);
-    ImGui::SliderFloat3("Sun", (float*)&m_lights[0].direction, -1, 1);
+    ImGui::NewLine();
 
+    // Sun
+    ImGui::Text("Sun");
+    ImGui::SliderFloat3("Direction", (float*)&m_lights[0].direction, -1, 1);
+    ImGui::SliderFloat("Intensity", (float*)&m_lights[0].intensity, 0.0, 100.0);
+    ImGui::NewLine();
+
+    // OpenGL option
+    ImGui::Text("OpenGL options");
+    ImGui::Checkbox("Wire frame mode", &m_wireframe);
+    ImGui::Checkbox("Normal mapping", &m_enablenormal);
+    ImGui::Checkbox("Parallax mapping", &m_enableparallax);
     ImGui::End();
 }
 
 void DSSApplication::skybox() {
     if (m_skyboxtex) {
         glDepthFunc(GL_LEQUAL);
+        glDisable(GL_CULL_FACE);
         glm::mat4 view;
         m_maincam.getViewMatrix(view);
         m_skyboxshader.use();
@@ -139,11 +156,13 @@ void DSSApplication::skybox() {
         m_skyboxshader.setTexture(SHADER_BINDING_PORT_SKYBOX, *m_skyboxtex);
         m_skybox.draw();
         glDepthFunc(GL_LESS);
+        glEnable(GL_CULL_FACE);
     }
 }
 void DSSApplication::scene() {
     m_maincam.getViewMatrix(m_mvp.view);
     m_maincam.getProjectionMatrix(m_mvp.projection);
+
     logPossibleGLError();
     m_baseshader.use();
 
@@ -153,12 +172,18 @@ void DSSApplication::scene() {
         m_baseshader.setUniform("nLights", (int)m_lights.size());
     }
     m_baseshader.setUniform("uCameraPosition", m_maincam.getPosition());
+    m_baseshader.setUniform("enableNormal", m_enablenormal);
+    m_baseshader.setUniform("enableParallax", m_enableparallax);
     logPossibleGLError();
 
-    m_scene.draw(m_baseshader, [this](const auto& scene, const auto& mesh) {
-        m_mvp.model = scene.getModelMatrix() * mesh.m_objmat;
-        m_mvpbuffer.updateData(0, sizeof(MVP), &m_mvp);
-    });
+    m_scene.draw(
+        m_baseshader,
+        [this](const auto& scene, const auto& mesh) {
+            m_mvp.model = scene.getModelMatrix() * mesh.m_objmat;
+            m_mvp.normalMatrix = glm::transpose(glm::inverse(m_mvp.model));
+            m_mvpbuffer.updateData(0, sizeof(MVP), &m_mvp);
+        },
+        m_wireframe ? GL_LINE : GL_FILL);
     logPossibleGLError();
 }
 void DSSApplication::clear() {
@@ -188,6 +213,7 @@ void DSSApplication::loop() {
     m_maincam.m_aspect = getWindowRatio();
     // render
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
 
     clear();
 

@@ -55,17 +55,17 @@ void Scene::prepare() const {
     }
 }
 
-void Scene::draw(
-    ShaderProgram& sp,
-    std::function<void(const Scene&, const Mesh&)> beforeDraw) const {
+void Scene::draw(ShaderProgram& sp,
+                 std::function<void(const Scene&, const Mesh&)> beforeDraw,
+                 GLenum drawMode) const {
     for (const auto& mesh : m_meshes) {
         beforeDraw(*this, *mesh);
-        mesh->draw(sp);
+        mesh->draw(sp, drawMode);
     }
 }
-void Scene::draw(ShaderProgram& sp) const {
+void Scene::draw(ShaderProgram& sp, GLenum drawMode) const {
     for (const auto& mesh : m_meshes) {
-        mesh->draw(sp);
+        mesh->draw(sp, drawMode);
     }
 }
 
@@ -73,7 +73,9 @@ Scene::Scene() = default;
 
 Scene createSceneFromFile(const std::string& filename) {
     NOT_IMPLEMENTED();
-    return std::move(Scene());
+    Scene scene;
+
+    return std::move(scene);
 }
 
 glm::mat4 getLightSpaceTransform(glm::vec3 lightPosition) {

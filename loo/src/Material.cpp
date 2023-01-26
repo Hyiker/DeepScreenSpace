@@ -19,15 +19,16 @@ static inline glm::vec3 aiColor3D2Glm(const aiColor3D& aColor) {
     return {aColor.r, aColor.g, aColor.b};
 }
 
-static shared_ptr<Texture2D> createMaterialTextures(const aiMaterial* mat,
-                                                    aiTextureType type,
-                                                    fs::path objParent) {
+static shared_ptr<Texture2D> createMaterialTextures(
+    const aiMaterial* mat, aiTextureType type, fs::path objParent,
+    bool generateMipmap = true) {
     vector<Texture2D> textures;
     if (mat->GetTextureCount(type)) {
+        // TODO: support multilayer texture
         aiString str;
         mat->GetTexture(type, 0, &str);
-        return createTexture2DFromFile(uniqueTexture,
-                                       (objParent / str.data).string());
+        return createTexture2DFromFile(
+            uniqueTexture, (objParent / str.C_Str()).string(), generateMipmap);
     } else {
         return nullptr;
     }
@@ -42,15 +43,14 @@ std::shared_ptr<Material> createSimpleMaterialFromAssimp(
     glm::vec3 diffuse = aiColor3D2Glm(color);
     aMaterial->Get(AI_MATKEY_COLOR_SPECULAR, color);
     glm::vec3 specular = aiColor3D2Glm(color);
+    aMaterial->Get(AI_MATKEY_COLOR_SPECULAR, color);
 
-    float shininess, ior, illum;
+    float shininess, _ior;
     aMaterial->Get(AI_MATKEY_SHININESS, shininess);
-    aMaterial->Get(AI_MATKEY_REFRACTI, ior);
-    // no correspond illum found in assimp
-    illum = 1;
+    aMaterial->Get(AI_MATKEY_REFRACTI, _ior);
 
     auto material = make_shared<SimpleMaterial>(ambient, diffuse, specular,
-                                                shininess, ior, illum);
+                                                glm::vec3(_ior), shininess);
     material->ambientTex =
         createMaterialTextures(aMaterial, aiTextureType_AMBIENT, objParent);
 
@@ -61,10 +61,13 @@ std::shared_ptr<Material> createSimpleMaterialFromAssimp(
         createMaterialTextures(aMaterial, aiTextureType_SPECULAR, objParent);
 
     material->displacementTex = createMaterialTextures(
-        aMaterial, aiTextureType_DISPLACEMENT, objParent);
+        aMaterial, aiTextureType_DISPLACEMENT, objParent, false);
+    // material->displacementTex->setSizeFilter(GL_NEAREST, GL_NEAREST);
+    // obj file saves normal map as bump maps
+    // FIXME: figure a way to distinguish height & normal in wavefront obj
+    // FUCK YOU, wavefront obj
     material->normalTex =
         createMaterialTextures(aMaterial, aiTextureType_NORMALS, objParent);
-
     material->opacityTex =
         createMaterialTextures(aMaterial, aiTextureType_OPACITY, objParent);
     material->heightTex =
@@ -94,8 +97,8 @@ void SimpleMaterial::bind(const ShaderProgram& sp) {
 shared_ptr<SimpleMaterial> SimpleMaterial::getDefault() {
     if (!defaultMaterial) {
         defaultMaterial = std::make_shared<SimpleMaterial>(
-            glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), glm::vec3(0, 0, 0), 0, 1.0,
-            5);
+            glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), glm::vec3(0, 0, 0),
+            glm::vec3(1.5), 1.0);
     }
     return defaultMaterial;
 }
