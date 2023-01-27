@@ -15,6 +15,8 @@
 #include <string>
 #include <vector>
 
+#include "FinalProcess.hpp"
+
 class DSSApplication : public loo::Application {
    public:
     DSSApplication(int width, int height, const char* skyBoxPrefix = nullptr);
@@ -29,6 +31,7 @@ class DSSApplication : public loo::Application {
     void gui();
     void scene();
     void skybox();
+    void finalprocess();
     void clear();
     void keyboard();
     void mouse();
@@ -48,6 +51,16 @@ class DSSApplication : public loo::Application {
     loo::UniformBuffer m_mvpbuffer;
     loo::UniformBuffer m_lightsbuffer;
     std::vector<loo::ShaderLight> m_lights;
+    // scene output
+    loo::Framebuffer m_scenefb;
+    loo::Renderbuffer m_scenedepthrb;
+    loo::Texture2D m_scenetexture;
+
+    // screen quad
+    std::shared_ptr<loo::Quad> m_globalquad;
+
+    FinalProcess m_finalprocess;
+
     bool m_wireframe{};
     bool m_enablenormal{true};
     bool m_enableparallax{true};

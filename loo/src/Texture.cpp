@@ -13,7 +13,8 @@ using namespace std;
 
 static unsigned char* readImageFromFile(const std::string& filename, int* width,
                                         int* height, GLenum* imgfmt,
-                                        GLenum* internalFmt) {
+                                        GLenum* internalFmt,
+                                        bool convertToLinear) {
     int ncomp = 0;
     stbi_set_flip_vertically_on_load(false);
     unsigned char* data = stbi_load(filename.c_str(), width, height, &ncomp, 0);
@@ -22,6 +23,7 @@ static unsigned char* readImageFromFile(const std::string& filename, int* width,
                              stbi_failure_reason());
         return nullptr;
     }
+    // TODO: a more elegant way to read srgb texture
     switch (ncomp) {
         case 1:
             // grey
@@ -36,12 +38,12 @@ static unsigned char* readImageFromFile(const std::string& filename, int* width,
         case 3:
             // rgb
             *imgfmt = GL_RGB;
-            *internalFmt = GL_RGB8;
+            *internalFmt = convertToLinear ? GL_SRGB8 : GL_RGB8;
             break;
         case 4:
             // rgba
             *imgfmt = GL_RGBA;
-            *internalFmt = GL_RGBA8;
+            *internalFmt = convertToLinear ? GL_SRGB8_ALPHA8 : GL_RGBA8;
             break;
         default:
             LOG(ERROR) << format("{}: unsupported tex format {}", filename,
@@ -53,14 +55,16 @@ static unsigned char* readImageFromFile(const std::string& filename, int* width,
 
 std::shared_ptr<Texture2D> createTexture2DFromFile(
     std::unordered_map<std::string, std::shared_ptr<Texture2D>>& uniqueTexture,
-    const std::string& filename, bool generateMipmap) {
+    const std::string& filename, unsigned int options) {
     if (uniqueTexture.count(filename)) return uniqueTexture[filename];
     shared_ptr<Texture2D> tex = make_shared<Texture2D>();
     int width, height;
     GLenum imgfmt, internalFmt;
+    bool generateMipmap = options & TEXTURE_OPTION_MIPMAP,
+         convertToLinear = options & TEXTURE_OPTION_CONVERT_TO_LINEAR;
 
-    auto data =
-        readImageFromFile(filename, &width, &height, &imgfmt, &internalFmt);
+    auto data = readImageFromFile(filename, &width, &height, &imgfmt,
+                                  &internalFmt, convertToLinear);
     if (!data) {
         return nullptr;
     }
@@ -96,15 +100,19 @@ void Texture2D::setup(unsigned char* data, GLsizei width, GLsizei height,
     glTextureStorage2D(m_id, maxLevel == -1 ? getMipmapLevels() : maxLevel,
                        internalformat, width, height);
     panicPossibleGLError();
-    // store data
-    glTextureSubImage2D(m_id, 0,              // level
-                        0, 0, width, height,  // offset, size
-                        format, type, data);
-    panicPossibleGLError();
+    if (data) {
+        // store data
+        glTextureSubImage2D(m_id, 0,              // level
+                            0, 0, width, height,  // offset, size
+                            format, type, data);
+        panicPossibleGLError();
+    }
 #else
     bind();
     glTexStorage2D(Target, level, internalformat, width, height);
-    glTexSubImage2D(Target, level, 0, 0, width, height, format, type, data);
+    if (data) {
+        glTexSubImage2D(Target, level, 0, 0, width, height, format, type, data);
+    }
     // glTexImage2D(Target, level, internalformat, width, height,
     // 0,
     //              format, type, data);
@@ -206,8 +214,8 @@ LOO_EXPORT std::shared_ptr<TextureCubeMap> createTextureCubeMapFromFiles(
         int width, height;
         GLenum imgfmt, internalFmt;
 
-        auto data =
-            readImageFromFile(filename, &width, &height, &imgfmt, &internalFmt);
+        auto data = readImageFromFile(filename, &width, &height, &imgfmt,
+                                      &internalFmt, true);
         if (!data) {
             return nullptr;
         }

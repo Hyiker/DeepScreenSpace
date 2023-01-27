@@ -84,7 +84,9 @@ DSSApplication::DSSApplication(int width, int height, const char* skyBoxPrefix)
       m_maincam(),
       m_mvpbuffer(0, sizeof(MVP)),
       m_lightsbuffer(SHADER_BINDING_LIGHTS,
-                     sizeof(ShaderLight) * SHADER_LIGHTS_MAX) {
+                     sizeof(ShaderLight) * SHADER_LIGHTS_MAX),
+      m_globalquad(make_shared<Quad>()),
+      m_finalprocess(getWidth(), getHeight(), m_globalquad) {
     ifstream ifs("camera.txt");
     if (!ifs.fail()) {
         glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -117,7 +119,21 @@ DSSApplication::DSSApplication(int width, int height, const char* skyBoxPrefix)
         m_lights.push_back(
             createDirectionalLight(glm::vec3(-1, -1, 0), glm::vec3(1, 1, 0)));
     }
-    logPossibleGLError();
+    // final pass related
+    {
+        m_scenefb.init();
+        m_scenetexture.init();
+        m_scenetexture.setup(getWidth(), getHeight(), GL_RGB32F, GL_RGB,
+                             GL_FLOAT, 1);
+        m_scenetexture.setSizeFilter(GL_LINEAR, GL_LINEAR);
+        panicPossibleGLError();
+        m_scenedepthrb.init(GL_DEPTH_COMPONENT32, getWidth(), getHeight());
+
+        m_scenefb.attachTexture(m_scenetexture, GL_COLOR_ATTACHMENT0, 0);
+        m_scenefb.attachRenderbuffer(m_scenedepthrb, GL_DEPTH_ATTACHMENT);
+        m_finalprocess.init();
+    }
+    panicPossibleGLError();
 }
 void DSSApplication::gui() {
     ImGui::Begin("Debug Panel");
@@ -144,10 +160,12 @@ void DSSApplication::gui() {
     ImGui::End();
 }
 
+void DSSApplication::finalprocess() { m_finalprocess.render(m_scenetexture); }
 void DSSApplication::skybox() {
     if (m_skyboxtex) {
         glDepthFunc(GL_LEQUAL);
         glDisable(GL_CULL_FACE);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glm::mat4 view;
         m_maincam.getViewMatrix(view);
         m_skyboxshader.use();
@@ -215,11 +233,17 @@ void DSSApplication::loop() {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
 
-    clear();
+    {
+        m_scenefb.bind();
 
-    scene();
+        clear();
 
-    skybox();
+        scene();
+
+        skybox();
+        m_scenefb.unbind();
+    }
+    finalprocess();
 
     keyboard();
 

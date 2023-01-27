@@ -101,7 +101,8 @@ class LOO_EXPORT Texture {
 #endif
     }
 };
-
+constexpr unsigned int TEXTURE_OPTION_MIPMAP = 0x1,
+                       TEXTURE_OPTION_CONVERT_TO_LINEAR = 0x2;
 class Texture2D : public Texture<GL_TEXTURE_2D> {
     static Texture2D whiteTexture;
     static Texture2D blackTexture;
@@ -119,7 +120,7 @@ class Texture2D : public Texture<GL_TEXTURE_2D> {
 };
 LOO_EXPORT std::shared_ptr<Texture2D> createTexture2DFromFile(
     std::unordered_map<std::string, std::shared_ptr<Texture2D>>& uniqueTexture,
-    const std::string& filename, bool generateMipmap);
+    const std::string& filename, unsigned int options);
 
 class TextureCubeMap : public Texture<GL_TEXTURE_CUBE_MAP> {
    public:

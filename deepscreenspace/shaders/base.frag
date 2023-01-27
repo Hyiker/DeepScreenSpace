@@ -22,7 +22,6 @@ vec2 parallaxMapping(vec2 texCoord, vec3 viewTS) {
     vec2 p = viewTS.xy / viewTS.z * (height * 0.2);
     return texCoord + p;
 }
-
 void main() {
     vec3 V = normalize(uCameraPosition - vPos);
     vec3 color = vec3(0);
@@ -51,7 +50,7 @@ void main() {
         switch (light.type) {
             case LIGHT_TYPE_DIRECTIONAL:
                 L = normalize(-lights[0].direction.xyz);
-                H = (V + L) / 2.0;
+                H = normalize(V + L);
                 break;
             default:
                 continue;

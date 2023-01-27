@@ -21,14 +21,15 @@ static inline glm::vec3 aiColor3D2Glm(const aiColor3D& aColor) {
 
 static shared_ptr<Texture2D> createMaterialTextures(
     const aiMaterial* mat, aiTextureType type, fs::path objParent,
-    bool generateMipmap = true) {
+    unsigned int options = TEXTURE_OPTION_MIPMAP |
+                           TEXTURE_OPTION_CONVERT_TO_LINEAR) {
     vector<Texture2D> textures;
     if (mat->GetTextureCount(type)) {
         // TODO: support multilayer texture
         aiString str;
         mat->GetTexture(type, 0, &str);
         return createTexture2DFromFile(
-            uniqueTexture, (objParent / str.C_Str()).string(), generateMipmap);
+            uniqueTexture, (objParent / str.C_Str()).string(), options);
     } else {
         return nullptr;
     }
@@ -61,17 +62,16 @@ std::shared_ptr<Material> createSimpleMaterialFromAssimp(
         createMaterialTextures(aMaterial, aiTextureType_SPECULAR, objParent);
 
     material->displacementTex = createMaterialTextures(
-        aMaterial, aiTextureType_DISPLACEMENT, objParent, false);
+        aMaterial, aiTextureType_DISPLACEMENT, objParent, 0x0);
     // material->displacementTex->setSizeFilter(GL_NEAREST, GL_NEAREST);
     // obj file saves normal map as bump maps
-    // FIXME: figure a way to distinguish height & normal in wavefront obj
     // FUCK YOU, wavefront obj
-    material->normalTex =
-        createMaterialTextures(aMaterial, aiTextureType_NORMALS, objParent);
-    material->opacityTex =
-        createMaterialTextures(aMaterial, aiTextureType_OPACITY, objParent);
-    material->heightTex =
-        createMaterialTextures(aMaterial, aiTextureType_HEIGHT, objParent);
+    material->normalTex = createMaterialTextures(
+        aMaterial, aiTextureType_NORMALS, objParent, TEXTURE_OPTION_MIPMAP);
+    material->opacityTex = createMaterialTextures(
+        aMaterial, aiTextureType_OPACITY, objParent, TEXTURE_OPTION_MIPMAP);
+    material->heightTex = createMaterialTextures(
+        aMaterial, aiTextureType_HEIGHT, objParent, TEXTURE_OPTION_MIPMAP);
     return material;
 }
 
