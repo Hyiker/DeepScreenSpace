@@ -2,6 +2,7 @@
 
 #include <glad/glad.h>
 #include <glog/logging.h>
+#include <meshoptimizer.h>
 
 #include <filesystem>
 #include <glm/gtc/matrix_transform.hpp>
@@ -44,6 +45,14 @@ size_t Scene::countVertex() const {
     }
     return cnt;
 }
+size_t Scene::countTriangle() const {
+    size_t cnt = 0;
+    for (const auto& mesh : m_meshes) {
+        cnt += mesh->countTriangles();
+    }
+    return cnt;
+}
+
 void Scene::addMeshes(vector<shared_ptr<Mesh>>&& meshes) {
     m_meshes.insert(m_meshes.end(), meshes.begin(), meshes.end());
 }
@@ -58,18 +67,32 @@ void Scene::prepare() const {
 void Scene::draw(ShaderProgram& sp,
                  std::function<void(const Scene&, const Mesh&)> beforeDraw,
                  GLenum drawMode) const {
+    GLint dims[4] = {0};
+    glGetIntegerv(GL_VIEWPORT, dims);
+    GLint fbSize = dims[2] * dims[3];
+    static int counter = 0;
     for (const auto& mesh : m_meshes) {
+        glBeginQuery(GL_SAMPLES_PASSED, m_queryid);
         beforeDraw(*this, *mesh);
         mesh->draw(sp, drawMode);
+        glEndQuery(GL_SAMPLES_PASSED);
+        if (counter % 120 == 0) {
+            GLuint fragmentsPassed = 0;
+            glGetQueryObjectuiv(m_queryid, GL_QUERY_RESULT, &fragmentsPassed);
+            float meshScreenProportion = fragmentsPassed / (float)fbSize;
+            mesh->updateLod(meshScreenProportion);
+            counter = 0;
+        }
+        counter++;
     }
 }
 void Scene::draw(ShaderProgram& sp, GLenum drawMode) const {
-    for (const auto& mesh : m_meshes) {
-        mesh->draw(sp, drawMode);
-    }
+    draw(
+        sp, [](const Scene&, const Mesh&) {}, drawMode);
 }
 
-Scene::Scene() = default;
+Scene::Scene() { glGenQueries(1, &m_queryid); }
+Scene::~Scene() { glDeleteQueries(1, &m_queryid); }
 
 Scene createSceneFromFile(const std::string& filename) {
     NOT_IMPLEMENTED();

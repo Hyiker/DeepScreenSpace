@@ -15,7 +15,8 @@ FinalProcess::FinalProcess(int width, int height,
     panicPossibleGLError();
 }
 void FinalProcess::init() { panicPossibleGLError(); }
-void FinalProcess::render(const loo::Texture2D& screenTexture) {
+void FinalProcess::render(const loo::Texture2D& screenTexture,
+                          bool directOutput) {
     Framebuffer::bindFinalOutput();
     glClearColor(0, 0, 0, 1);
     glDisable(GL_DEPTH_TEST);
@@ -23,6 +24,7 @@ void FinalProcess::render(const loo::Texture2D& screenTexture) {
     // force fill the quad in the final step
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     m_shader.use();
+    m_shader.setUniform("directOutput", directOutput);
     m_shader.setTexture(0, screenTexture);
 
     m_quad->draw();

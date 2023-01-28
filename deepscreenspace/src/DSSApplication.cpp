@@ -112,7 +112,9 @@ DSSApplication::DSSApplication(int width, int height, const char* skyBoxPrefix)
                                    .bottom("bottom")
                                    .prefix(skyBoxPrefix)
                                    .build();
-        m_skyboxtex = createTextureCubeMapFromFiles(skyboxFilenames);
+        m_skyboxtex = createTextureCubeMapFromFiles(
+            skyboxFilenames,
+            TEXTURE_OPTION_CONVERT_TO_LINEAR | TEXTURE_OPTION_MIPMAP);
     }
     // scene light
     {
@@ -122,45 +124,102 @@ DSSApplication::DSSApplication(int width, int height, const char* skyBoxPrefix)
     // final pass related
     {
         m_scenefb.init();
-        m_scenetexture.init();
-        m_scenetexture.setup(getWidth(), getHeight(), GL_RGB32F, GL_RGB,
-                             GL_FLOAT, 1);
-        m_scenetexture.setSizeFilter(GL_LINEAR, GL_LINEAR);
+        m_scenetexture = make_shared<Texture2D>();
+        m_scenetexture->init();
+        m_scenetexture->setup(getWidth(), getHeight(), GL_RGB32F, GL_RGB,
+                              GL_FLOAT, 1);
+        m_scenetexture->setSizeFilter(GL_LINEAR, GL_LINEAR);
         panicPossibleGLError();
         m_scenedepthrb.init(GL_DEPTH_COMPONENT32, getWidth(), getHeight());
 
-        m_scenefb.attachTexture(m_scenetexture, GL_COLOR_ATTACHMENT0, 0);
+        m_scenefb.attachTexture(*m_scenetexture, GL_COLOR_ATTACHMENT0, 0);
         m_scenefb.attachRenderbuffer(m_scenedepthrb, GL_DEPTH_ATTACHMENT);
         m_finalprocess.init();
     }
     panicPossibleGLError();
 }
 void DSSApplication::gui() {
-    ImGui::Begin("Debug Panel");
-    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
-                1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+    auto& io = ImGui::GetIO();
+    float h = io.DisplaySize.y;
+    ImGuiWindowFlags windowFlags =
+        ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings |
+        ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav |
+        ImGuiWindowFlags_NoMove;
+    {
+        ImGui::SetNextWindowBgAlpha(0.5f);
+        ImGui::SetNextWindowSize(ImVec2(300, h * 0.3));
+        ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
+        if (ImGui::Begin("Dashboard", nullptr, windowFlags)) {
+            ImGui::Text(
+                "Frame generation delay: %.3f ms/frame\n"
+                "FPS: %.1f",
+                1000.0f / io.Framerate, io.Framerate);
+            const GLubyte* renderer = glGetString(GL_RENDERER);
+            const GLubyte* version = glGetString(GL_VERSION);
+            ImGui::Text("Renderer: %s", renderer);
+            ImGui::Text("OpenGL Version: %s", version);
+            int triangleCount = m_scene.countTriangle();
+            const char* base = "";
+            if (triangleCount > 5000) {
+                triangleCount /= 1000;
+                base = "k";
+            }
+            if (triangleCount > 5000) {
+                triangleCount /= 1000;
+                base = "M";
+            }
+            ImGui::Text(
+                "Scene meshes: %d\n"
+                "Scene triangles: %d%s",
+                (int)m_scene.countMesh(), triangleCount, base);
+        }
+    }
 
-    const GLubyte* renderer = glGetString(GL_RENDERER);
-    const GLubyte* version = glGetString(GL_VERSION);
-    ImGui::Text("Renderer: %s", renderer);
-    ImGui::Text("OpenGL Version: %s", version);
-    ImGui::NewLine();
+    {
+        ImGui::SetNextWindowBgAlpha(0.5f);
+        ImGui::SetNextWindowSize(ImVec2(300, h * 0.5));
+        ImGui::SetNextWindowPos(ImVec2(0, h * 0.3), ImGuiCond_Always);
+        if (ImGui::Begin("Options", nullptr, windowFlags)) {
+            // Sun
+            if (ImGui::CollapsingHeader("Sun",
+                                        ImGuiTreeNodeFlags_DefaultOpen)) {
+                ImGui::SliderFloat3("Direction", (float*)&m_lights[0].direction,
+                                    -1, 1);
+                ImGui::SliderFloat("Intensity", (float*)&m_lights[0].intensity,
+                                   0.0, 100.0);
+            }
 
-    // Sun
-    ImGui::Text("Sun");
-    ImGui::SliderFloat3("Direction", (float*)&m_lights[0].direction, -1, 1);
-    ImGui::SliderFloat("Intensity", (float*)&m_lights[0].intensity, 0.0, 100.0);
-    ImGui::NewLine();
-
-    // OpenGL option
-    ImGui::Text("OpenGL options");
-    ImGui::Checkbox("Wire frame mode", &m_wireframe);
-    ImGui::Checkbox("Normal mapping", &m_enablenormal);
-    ImGui::Checkbox("Parallax mapping", &m_enableparallax);
-    ImGui::End();
+            // OpenGL option
+            if (ImGui::CollapsingHeader("OpenGL options",
+                                        ImGuiTreeNodeFlags_DefaultOpen)) {
+                ImGui::Checkbox("Wire frame mode", &m_wireframe);
+                ImGui::Checkbox("Normal mapping", &m_enablenormal);
+                ImGui::Checkbox("Parallax mapping", &m_enableparallax);
+                ImGui::Checkbox("Visualize lod", &m_lodvisualize);
+            }
+        }
+    }
+    {
+        float h_img = h * 0.2,
+              w_img = h_img / io.DisplaySize.y * io.DisplaySize.x;
+        ImGui::SetNextWindowBgAlpha(1.0f);
+        vector<shared_ptr<Texture2D>> textures{m_scenetexture};
+        ImGui::SetNextWindowSize(ImVec2(w_img * textures.size(), h_img));
+        ImGui::SetNextWindowPos(ImVec2(0, h * 0.8), ImGuiCond_Always);
+        if (ImGui::Begin("Textures", nullptr,
+                         windowFlags | ImGuiWindowFlags_NoDecoration)) {
+            for (auto tex : textures) {
+                ImGui::Image((void*)(intptr_t)tex->getId(),
+                             ImVec2(w_img, h_img), ImVec2(0, 1), ImVec2(1, 0));
+                ImGui::SameLine();
+            }
+        }
+    }
 }
 
-void DSSApplication::finalprocess() { m_finalprocess.render(m_scenetexture); }
+void DSSApplication::finalprocess() {
+    m_finalprocess.render(*m_scenetexture, m_lodvisualize);
+}
 void DSSApplication::skybox() {
     if (m_skyboxtex) {
         glDepthFunc(GL_LEQUAL);
@@ -192,6 +251,7 @@ void DSSApplication::scene() {
     m_baseshader.setUniform("uCameraPosition", m_maincam.getPosition());
     m_baseshader.setUniform("enableNormal", m_enablenormal);
     m_baseshader.setUniform("enableParallax", m_enableparallax);
+    m_baseshader.setUniform("enableLodVisualize", (int)m_lodvisualize);
     logPossibleGLError();
 
     m_scene.draw(

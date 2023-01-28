@@ -15,6 +15,8 @@ out vec4 FragColor;
 uniform vec3 uCameraPosition;
 layout(location = 18) uniform bool enableNormal;
 layout(location = 19) uniform bool enableParallax;
+layout(location = 20) uniform bool enableLodVisualize;
+layout(location = 21) uniform int meshLod;
 const float ambientIntensity = 0.2f;
 
 vec2 parallaxMapping(vec2 texCoord, vec3 viewTS) {
@@ -23,6 +25,21 @@ vec2 parallaxMapping(vec2 texCoord, vec3 viewTS) {
     return texCoord + p;
 }
 void main() {
+    if (enableLodVisualize) {
+        switch (meshLod) {
+            case 0:
+                FragColor.rgb = vec3(0.50, 0, 0.15);
+                break;
+            case 1:
+                FragColor.rgb = vec3(1, 0.31, 0.16);
+                break;
+            case 2:
+                FragColor.rgb = vec3(1, 1, 0.8);
+                break;
+        }
+        return;
+    }
+
     vec3 V = normalize(uCameraPosition - vPos);
     vec3 color = vec3(0);
     mat3 TBN =

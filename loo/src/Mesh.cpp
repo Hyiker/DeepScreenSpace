@@ -3,6 +3,7 @@
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <glog/logging.h>
+#include <meshoptimizer.h>
 
 #include <assimp/Importer.hpp>
 #include <filesystem>
@@ -71,16 +72,40 @@ void Mesh::prepare() {
 }
 
 size_t Mesh::countVertex() const { return vertices.size(); }
+size_t Mesh::countTriangles(bool lod) const {
+    if (!lod) return indices.size() / 3;
+    GLuint indexOffset = m_lodoffsets[m_lod],
+           indexCount =
+               (m_lod == m_lodoffsets.size() - 1 ? indices.size()
+                                                 : m_lodoffsets[m_lod + 1]) -
+               indexOffset;
+    return indexCount / 3;
+}
 
 void Mesh::draw(ShaderProgram& sp, GLenum drawMode) const {
     glPolygonMode(GL_FRONT_AND_BACK, drawMode);
     glBindVertexArray(vao);
     // bind material uniforms
     material->bind(sp);
-    glDrawElements(GL_TRIANGLES, static_cast<GLuint>(indices.size()),
-                   GL_UNSIGNED_INT, nullptr);
-
+    sp.setUniform("meshLod", m_lod);
+    GLuint indexOffset = m_lodoffsets[m_lod],
+           indexCount =
+               (m_lod == m_lodoffsets.size() - 1 ? indices.size()
+                                                 : m_lodoffsets[m_lod + 1]) -
+               indexOffset;
+    glDrawElements(GL_TRIANGLES, static_cast<GLuint>(indexCount),
+                   GL_UNSIGNED_INT, (void*)(indexOffset * sizeof(GLuint)));
     glBindVertexArray(0);
+}
+
+void Mesh::updateLod(float screenProportion) {
+    if (screenProportion < 0.05) {
+        m_lod = 2;
+    } else if (screenProportion < 0.2) {
+        m_lod = 1;
+    } else {
+        m_lod = 0;
+    }
 }
 
 using namespace Assimp;
@@ -162,9 +187,48 @@ static std::shared_ptr<Mesh> processAssimpMesh(
     // specular: texture_specularN
     // normal: texture_normalN
     auto mat = createSimpleMaterialFromAssimp(material, objParent);
+    vector<unsigned int> lodOffsets(3, 0);
+    {
+        vector<unsigned int> remap(indices.size());
+        // optimization
+        auto vertex_count = meshopt_generateVertexRemap(
+            remap.data(), indices.data(), indices.size(), vertices.data(),
+            vertices.size(), sizeof(Vertex));
+        vector<unsigned int> rmpIndices(indices.size());
+        vector<Vertex> rmpVertices(vertex_count);
+        meshopt_remapIndexBuffer(rmpIndices.data(), indices.data(),
+                                 remap.size(), remap.data());
+        meshopt_remapVertexBuffer(rmpVertices.data(), vertices.data(),
+                                  indices.size(), sizeof(Vertex), remap.data());
+        indices = rmpIndices;
+        vertices = rmpVertices;
+
+        float thresholds[2]{0.5f, 0.1f};
+        int index_count = indices.size();
+        meshopt_optimizeVertexCache(indices.data(), indices.data(),
+                                    indices.size(), vertex_count);
+        for (int i = 0; i < 2; i++) {
+            float threshold = thresholds[i];
+            size_t target_index_count = size_t(index_count * threshold);
+            float target_error = 1e-2f;
+
+            std::vector<unsigned int> lod(index_count);
+            float lod_error = 0.f;
+            lod.resize(meshopt_simplifySloppy(
+                lod.data(), indices.data(), index_count,
+                &vertices[0].position.x, vertex_count, sizeof(Vertex),
+                target_index_count, target_error, &lod_error));
+            meshopt_optimizeVertexCache(lod.data(), lod.data(), lod.size(),
+                                        vertex_count);
+            lodOffsets[i + 1] = indices.size();
+            indices.insert(indices.end(), lod.begin(), lod.end());
+        }
+    }
+
     // return a mesh object created from the extracted mesh data
     return make_shared<Mesh>(std::move(vertices), std::move(indices), mat,
-                             mesh->mName.C_Str(), basicTransform);
+                             mesh->mName.C_Str(), basicTransform,
+                             std::move(lodOffsets));
 }
 
 static void processAssimpNode(aiNode* node, const aiScene* scene,

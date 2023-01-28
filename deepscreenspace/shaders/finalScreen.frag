@@ -4,7 +4,7 @@ out vec4 FragColor;
 in vec2 texCoord;
 
 layout(binding = 0) uniform sampler2D screenTexture;
-
+uniform bool directOutput;
 vec3 gammaCorrection(in vec3 color) {
     const float gamma = 2.2;
     return pow(color, vec3(1.0 / gamma));
@@ -12,6 +12,10 @@ vec3 gammaCorrection(in vec3 color) {
 
 void main() {
     vec3 color = texture(screenTexture, texCoord).rgb;
+    if (directOutput) {
+        FragColor = vec4(color, 1.0);
+        return;
+    }
     color = gammaCorrection(color);
     FragColor = vec4(color, 1.0);
 }

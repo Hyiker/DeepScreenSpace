@@ -13,7 +13,9 @@ class FinalProcess {
    public:
     FinalProcess(int width, int height, std::shared_ptr<loo::Quad> quad);
     void init();
-    void render(const loo::Texture2D& screenTexture);
+    // if use direct output, this pass will just out put the previous rendering
+    // result without doing any addition postprocessing
+    void render(const loo::Texture2D& screenTexture, bool directOutput = false);
 };
 
 #endif /* DEEPSCREENSPACE_INCLUDE_FINAL_PROCESS_HPP */

@@ -19,6 +19,7 @@ namespace loo {
 class LOO_EXPORT Scene {
     std::vector<std::shared_ptr<Mesh>> m_meshes;
     glm::mat4 m_modelmat{1.0};
+    GLuint m_queryid;
 
    public:
     void scale(glm::vec3 ratio);
@@ -28,6 +29,7 @@ class LOO_EXPORT Scene {
 
     // +++++ debug use +++++
     size_t countMesh() const;
+    size_t countTriangle() const;
     size_t countVertex() const;
     // +++++ debug use +++++
 
@@ -39,6 +41,7 @@ class LOO_EXPORT Scene {
 
     void draw(ShaderProgram& sp, GLenum drawMode = GL_FILL) const;
     Scene();
+    ~Scene();
 };
 
 LOO_EXPORT Scene createSceneFromFile(const std::string& filename);

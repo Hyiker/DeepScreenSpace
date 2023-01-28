@@ -31,17 +31,30 @@ struct LOO_EXPORT Mesh {
 
     Mesh(std::vector<Vertex>&& vertices, std::vector<unsigned int>&& indicies,
          std::shared_ptr<Material> material, std::string name,
-         const glm::mat4& transform)
+         const glm::mat4& transform, std::vector<unsigned int>&& lodOffsets)
         : vertices(vertices),
           indices(indicies),
           material(material),
           name(std::move(name)),
-          m_objmat(transform) {}
+          m_objmat(transform),
+          // TODO: controllable lod levels
+          m_lodoffsets(lodOffsets) {}
 
     GLuint vao, vbo, ebo;
     void prepare();
     size_t countVertex() const;
+    size_t countTriangles(bool lod = true) const;
+
     void draw(ShaderProgram& sp, GLenum drawMode = GL_FILL) const;
+    void updateLod(float screenProportion);
+    int getLod() const { return m_lod; }
+
+   private:
+    // Level of detail
+    // the larger the less detail
+    // now using 0-1-2
+    int m_lod{0};
+    std::vector<unsigned int> m_lodoffsets;
 };
 
 LOO_EXPORT std::vector<std::shared_ptr<Mesh>> createMeshFromFile(

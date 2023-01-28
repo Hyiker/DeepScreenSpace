@@ -54,7 +54,7 @@ class DSSApplication : public loo::Application {
     // scene output
     loo::Framebuffer m_scenefb;
     loo::Renderbuffer m_scenedepthrb;
-    loo::Texture2D m_scenetexture;
+    std::shared_ptr<loo::Texture2D> m_scenetexture;
 
     // screen quad
     std::shared_ptr<loo::Quad> m_globalquad;
@@ -64,6 +64,7 @@ class DSSApplication : public loo::Application {
     bool m_wireframe{};
     bool m_enablenormal{true};
     bool m_enableparallax{true};
+    bool m_lodvisualize{false};
     // float m_displaceintensity{};
 };
 

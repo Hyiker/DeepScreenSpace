@@ -174,6 +174,6 @@ class TextureCubeMap : public Texture<GL_TEXTURE_CUBE_MAP> {
 };
 // we assume cubemap texture doesn't need deduplicate
 LOO_EXPORT std::shared_ptr<TextureCubeMap> createTextureCubeMapFromFiles(
-    const std::vector<std::string>& filenames);
+    const std::vector<std::string>& filenames, unsigned int options);
 }  // namespace loo
 #endif /* LOO_LOO_TEXTURE_HPP */

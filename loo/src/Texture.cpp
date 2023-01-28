@@ -206,16 +206,18 @@ void TextureCubeMap::setupFace(GLenum face, unsigned char* data, GLenum format,
 }
 
 LOO_EXPORT std::shared_ptr<TextureCubeMap> createTextureCubeMapFromFiles(
-    const std::vector<std::string>& filenames) {
+    const std::vector<std::string>& filenames, unsigned int options) {
     shared_ptr<TextureCubeMap> tex = make_shared<TextureCubeMap>();
     tex->init();
+    bool generateMipmap = options & TEXTURE_OPTION_MIPMAP,
+         convertToLinear = options & TEXTURE_OPTION_CONVERT_TO_LINEAR;
     for (int i = 0; i < 6; i++) {
         auto filename = filenames[i];
         int width, height;
         GLenum imgfmt, internalFmt;
 
         auto data = readImageFromFile(filename, &width, &height, &imgfmt,
-                                      &internalFmt, true);
+                                      &internalFmt, convertToLinear);
         if (!data) {
             return nullptr;
         }
