@@ -28,9 +28,12 @@ namespace loo {
         LOG(FATAL) << "Error code " << e << ": " << errCode2String(e) \
                    << "; Exit now!" << std::endl;                     \
     }
-#define NOT_IMPLEMENTED()                 \
-    LOG(FATAL) << "Function " << __func__ \
-               << "() hasn't been implemented yet!\n";
+#define NOT_IMPLEMENTED_RUNTIME() \
+    LOG(FATAL) << "Function " << __func__ << "() hasn't been implemented yet!\n"
+#define NOT_IMPLEMENTED_COMPILE_TIME() \
+    static_assert(false, "Function not implemented!")
+#define NOT_IMPLEMENTED NOT_IMPLEMENTED_COMPILE_TIME
+
 LOO_EXPORT const char* errCode2String(GLenum err);
 
 }  // namespace loo

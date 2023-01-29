@@ -76,7 +76,7 @@ void Scene::draw(ShaderProgram& sp,
         beforeDraw(*this, *mesh);
         mesh->draw(sp, drawMode);
         glEndQuery(GL_SAMPLES_PASSED);
-        if (counter % 120 == 0) {
+        if (counter % 30 == 0) {
             GLuint fragmentsPassed = 0;
             glGetQueryObjectuiv(m_queryid, GL_QUERY_RESULT, &fragmentsPassed);
             float meshScreenProportion = fragmentsPassed / (float)fbSize;
@@ -95,7 +95,7 @@ Scene::Scene() { glGenQueries(1, &m_queryid); }
 Scene::~Scene() { glDeleteQueries(1, &m_queryid); }
 
 Scene createSceneFromFile(const std::string& filename) {
-    NOT_IMPLEMENTED();
+    NOT_IMPLEMENTED_RUNTIME();
     Scene scene;
 
     return std::move(scene);

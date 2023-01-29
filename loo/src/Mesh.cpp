@@ -202,8 +202,8 @@ static std::shared_ptr<Mesh> processAssimpMesh(
                                   indices.size(), sizeof(Vertex), remap.data());
         indices = rmpIndices;
         vertices = rmpVertices;
-
-        float thresholds[2]{0.5f, 0.1f};
+        // lod simplification ratio
+        float thresholds[2]{0.25f, 0.05f};
         int index_count = indices.size();
         meshopt_optimizeVertexCache(indices.data(), indices.data(),
                                     indices.size(), vertex_count);
@@ -214,13 +214,15 @@ static std::shared_ptr<Mesh> processAssimpMesh(
 
             std::vector<unsigned int> lod(index_count);
             float lod_error = 0.f;
-            lod.resize(meshopt_simplifySloppy(
-                lod.data(), indices.data(), index_count,
-                &vertices[0].position.x, vertex_count, sizeof(Vertex),
-                target_index_count, target_error, &lod_error));
+            lod.resize(meshopt_simplify(lod.data(), indices.data(), index_count,
+                                        &vertices[0].position.x, vertex_count,
+                                        sizeof(Vertex), target_index_count,
+                                        target_error, 0, &lod_error));
             meshopt_optimizeVertexCache(lod.data(), lod.data(), lod.size(),
                                         vertex_count);
             lodOffsets[i + 1] = indices.size();
+            LOG(INFO) << "Lod simplification ratio: "
+                      << lod.size() / (float)index_count * 100.0 << "%";
             indices.insert(indices.end(), lod.begin(), lod.end());
         }
     }
