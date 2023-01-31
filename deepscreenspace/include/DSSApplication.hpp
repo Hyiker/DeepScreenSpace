@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 
+#include "DeepScreenSpace.hpp"
 #include "FinalProcess.hpp"
 
 class DSSApplication : public loo::Application {
@@ -32,6 +33,7 @@ class DSSApplication : public loo::Application {
     void scene();
     void skybox();
     void finalprocess();
+    void deepScreenSpace();
     void clear();
     void keyboard();
     void mouse();
@@ -51,15 +53,22 @@ class DSSApplication : public loo::Application {
     loo::UniformBuffer m_mvpbuffer;
     loo::UniformBuffer m_lightsbuffer;
     std::vector<loo::ShaderLight> m_lights;
-    // scene output
+    // scene render output
     loo::Framebuffer m_scenefb;
     loo::Renderbuffer m_scenedepthrb;
     std::shared_ptr<loo::Texture2D> m_scenetexture;
 
+    // scene surfelize
+    loo::Framebuffer m_surfelizefb;
+
     // screen quad
     std::shared_ptr<loo::Quad> m_globalquad;
 
+    // process
     FinalProcess m_finalprocess;
+
+    // Deep screen space
+    DeepScreenSpace m_dss;
 
     bool m_wireframe{};
     bool m_enablenormal{true};

@@ -82,7 +82,7 @@ size_t Mesh::countTriangles(bool lod) const {
     return indexCount / 3;
 }
 
-void Mesh::draw(ShaderProgram& sp, GLenum drawMode) const {
+void Mesh::draw(ShaderProgram& sp, GLenum drawMode, bool tessellation) const {
     glPolygonMode(GL_FRONT_AND_BACK, drawMode);
     glBindVertexArray(vao);
     // bind material uniforms
@@ -93,8 +93,11 @@ void Mesh::draw(ShaderProgram& sp, GLenum drawMode) const {
                (m_lod == m_lodoffsets.size() - 1 ? indices.size()
                                                  : m_lodoffsets[m_lod + 1]) -
                indexOffset;
-    glDrawElements(GL_TRIANGLES, static_cast<GLuint>(indexCount),
-                   GL_UNSIGNED_INT, (void*)(indexOffset * sizeof(GLuint)));
+    logPossibleGLError();
+    glDrawElements(tessellation ? GL_PATCHES : GL_TRIANGLES,
+                   static_cast<GLuint>(indexCount), GL_UNSIGNED_INT,
+                   (void*)(indexOffset * sizeof(GLuint)));
+
     glBindVertexArray(0);
 }
 
@@ -221,8 +224,8 @@ static std::shared_ptr<Mesh> processAssimpMesh(
             meshopt_optimizeVertexCache(lod.data(), lod.data(), lod.size(),
                                         vertex_count);
             lodOffsets[i + 1] = indices.size();
-            LOG(INFO) << "Lod simplification ratio: "
-                      << lod.size() / (float)index_count * 100.0 << "%";
+            // LOG(INFO) << "Lod simplification ratio: "
+            //           << lod.size() / (float)index_count * 100.0 << "%";
             indices.insert(indices.end(), lod.begin(), lod.end());
         }
     }

@@ -17,7 +17,7 @@ FinalProcess::FinalProcess(int width, int height,
 void FinalProcess::init() { panicPossibleGLError(); }
 void FinalProcess::render(const loo::Texture2D& screenTexture,
                           bool directOutput) {
-    Framebuffer::bindFinalOutput();
+    Framebuffer::bindDefault();
     glClearColor(0, 0, 0, 1);
     glDisable(GL_DEPTH_TEST);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);

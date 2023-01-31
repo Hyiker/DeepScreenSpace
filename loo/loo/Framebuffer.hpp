@@ -39,7 +39,7 @@ class Framebuffer {
     Framebuffer() = default;
     Framebuffer(const Framebuffer&) = delete;
     Framebuffer& operator=(const Framebuffer&) = delete;
-    static void bindFinalOutput() { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
+    static void bindDefault() { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
     Framebuffer(Framebuffer&& buffer) noexcept : m_fbo(buffer.m_fbo) {
         buffer.m_fbo = GL_INVALID_INDEX;
     }
@@ -52,8 +52,8 @@ class Framebuffer {
     }
     GLuint getId() const { return m_fbo; }
 
-    void bind() { glBindFramebuffer(GL_FRAMEBUFFER, m_fbo); }
-    void unbind() { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
+    void bind() const { glBindFramebuffer(GL_FRAMEBUFFER, m_fbo); }
+    void unbind() const { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
     void attachTexture(const Texture2D& tex, GLenum attachment, GLint level) {
 #ifdef OGL_46
         glNamedFramebufferTexture(m_fbo, attachment, tex.getId(), level);

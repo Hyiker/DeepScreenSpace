@@ -19,7 +19,7 @@ target("DeepScreenSpace")
     add_cxflags("/execution-charset:utf-8", "/source-charset:utf-8", {tools = {"clang_cl", "cl"}})
 
     -- spirv shader compilation
-    before_build("windows", "linux", function (target) 
+    on_config("windows", "linux", function (target) 
         local shader_src = path.join("$(projectdir)", "deepscreenspace", "shaders")
         local shader_target = path.join("$(projectdir)", "deepscreenspace", "include", "shaders")
         local shader_inc = path.join("$(projectdir)", "loo", "shader")
@@ -58,6 +58,10 @@ static const std::vector<unsigned char> %s = {%s};
         -- TODO: support recursive dir
         for _, src in ipairs(os.files(path.join(shader_src, "**"))) do
             local fn = path.filename(src)
+            if path.extension(fn) == ".glsl" then
+                -- skip include files
+                goto continue
+            end
             local spv_binary_fn = string.format("%s.spv", fn)
             local spv_binary = path.join(shader_target, spv_binary_fn)
             local cmd = string.format(string.format("glslc -I %s %s -o %s %s", shader_inc, src,
@@ -71,6 +75,7 @@ static const std::vector<unsigned char> %s = {%s};
             hex2cpp(spv_binary, cpp_target, string.upper(fn:gsub("%.", "_")))
             os.rm(spv_binary)
             cprintf("${bright green}[INFO] ${clear}%s generated\n", cpp_target)
+            ::continue::
         end
 
     end)

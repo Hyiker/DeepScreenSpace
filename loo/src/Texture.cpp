@@ -147,6 +147,35 @@ const Texture2D& Texture2D::getBlackTexture() {
     return Texture2D::blackTexture;
 }
 
+void Texture2DArray::setupStorage(GLsizei width, GLsizei height, GLsizei depth,
+                                  GLenum internalformat, int maxLevel) {
+    this->width = width;
+    this->height = height;
+    this->depth = depth;
+#ifdef OGL_46
+    glTextureStorage3D(m_id, maxLevel == -1 ? getMipmapLevels() : maxLevel,
+                       internalformat, width, height, depth);
+#else
+    NOT_IMPLEMENTED();
+#endif
+}
+void Texture2DArray::setupLayer(GLsizei layer, unsigned char* data,
+                                GLenum format, GLenum type) {
+    CHECK_GE(layer, 0);
+    CHECK_LT(layer, depth);
+#ifdef OGL_46
+    glTextureSubImage3D(m_id, 0,           // level
+                        0, 0, layer,       // offset
+                        width, height, 1,  // size
+                        format, type, data);
+    panicPossibleGLError();
+#else
+    bind();
+    NOT_IMPLEMENTED();
+    unbind();
+#endif
+}
+
 vector<string> TextureCubeMap::TextureCubeMapBuilder::build() {
     vector<string> ret;
     for (int i = GL_TEXTURE_CUBE_MAP_POSITIVE_X;
@@ -165,10 +194,14 @@ void TextureCubeMap::setupStorage(GLsizei width, GLsizei height,
                                   GLenum internalformat, int maxLevel) {
     this->width = width;
     this->height = height;
+#ifdef OGL_46
     glTextureStorage2D(m_id, maxLevel == -1 ? getMipmapLevels() : maxLevel,
                        internalformat, width, height);
+#else
+    NOT_IMPLEMENTED();
+#endif
 }
-void TextureCubeMap::setupFace(GLenum face, unsigned char* data, GLenum format,
+void TextureCubeMap::setupFace(int face, unsigned char* data, GLenum format,
                                GLenum type) {
     CHECK_LT(face, 6);
     CHECK_GE(face, 0);
@@ -195,6 +228,7 @@ void TextureCubeMap::setupFace(GLenum face, unsigned char* data, GLenum format,
     panicPossibleGLError();
 #else
     bind();
+    NOT_IMPLEMENTED();
     glTexStorage2D(Target, level, internalformat, width, height);
     glTexSubImage2D(Target, level, 0, 0, width, height, format, type, data);
     // glTexImage2D(Target, level, internalformat, width, height,
@@ -205,7 +239,7 @@ void TextureCubeMap::setupFace(GLenum face, unsigned char* data, GLenum format,
 #endif
 }
 
-LOO_EXPORT std::shared_ptr<TextureCubeMap> createTextureCubeMapFromFiles(
+std::shared_ptr<TextureCubeMap> createTextureCubeMapFromFiles(
     const std::vector<std::string>& filenames, unsigned int options) {
     shared_ptr<TextureCubeMap> tex = make_shared<TextureCubeMap>();
     tex->init();

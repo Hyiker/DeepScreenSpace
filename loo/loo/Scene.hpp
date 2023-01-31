@@ -15,7 +15,7 @@
 #include "predefs.hpp"
 
 namespace loo {
-
+constexpr int DRAW_FLAG_UPDATE_LOD = 0x1, DRAW_FLAG_TESSELLATION = 0x2;
 class LOO_EXPORT Scene {
     std::vector<std::shared_ptr<Mesh>> m_meshes;
     glm::mat4 m_modelmat{1.0};
@@ -37,9 +37,11 @@ class LOO_EXPORT Scene {
 
     void draw(ShaderProgram& sp,
               std::function<void(const Scene&, const Mesh&)> beforeDraw,
-              GLenum drawMode = GL_FILL) const;
+              GLenum drawMode = GL_FILL,
+              int drawFlags = DRAW_FLAG_UPDATE_LOD) const;
 
-    void draw(ShaderProgram& sp, GLenum drawMode = GL_FILL) const;
+    void draw(ShaderProgram& sp, GLenum drawMode = GL_FILL,
+              int drawFlags = DRAW_FLAG_UPDATE_LOD) const;
     Scene();
     ~Scene();
 };

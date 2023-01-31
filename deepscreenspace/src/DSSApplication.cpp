@@ -76,17 +76,18 @@ void DSSApplication::loadGLTF(const std::string& filename, float scaling) {
 
 DSSApplication::DSSApplication(int width, int height, const char* skyBoxPrefix)
     : Application(width, height),
-      m_baseshader{Shader(BASE_VERT, GL_VERTEX_SHADER),
-                   Shader(BASE_FRAG, GL_FRAGMENT_SHADER)},
-      m_skyboxshader{Shader(SKYBOX_VERT, GL_VERTEX_SHADER),
-                     Shader(SKYBOX_FRAG, GL_FRAGMENT_SHADER)},
+      m_baseshader{Shader(BASE_VERT, ShaderType::Vertex),
+                   Shader(BASE_FRAG, ShaderType::Fragment)},
+      m_skyboxshader{Shader(SKYBOX_VERT, ShaderType::Vertex),
+                     Shader(SKYBOX_FRAG, ShaderType::Fragment)},
       m_scene(),
       m_maincam(),
       m_mvpbuffer(0, sizeof(MVP)),
       m_lightsbuffer(SHADER_BINDING_LIGHTS,
                      sizeof(ShaderLight) * SHADER_LIGHTS_MAX),
       m_globalquad(make_shared<Quad>()),
-      m_finalprocess(getWidth(), getHeight(), m_globalquad) {
+      m_finalprocess(getWidth(), getHeight(), m_globalquad),
+      m_dss(getWidth(), getHeight()) {
     ifstream ifs("camera.txt");
     if (!ifs.fail()) {
         glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -150,28 +151,46 @@ void DSSApplication::gui() {
         ImGui::SetNextWindowSize(ImVec2(300, h * 0.3));
         ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
         if (ImGui::Begin("Dashboard", nullptr, windowFlags)) {
-            ImGui::Text(
-                "Frame generation delay: %.3f ms/frame\n"
-                "FPS: %.1f",
-                1000.0f / io.Framerate, io.Framerate);
-            const GLubyte* renderer = glGetString(GL_RENDERER);
-            const GLubyte* version = glGetString(GL_VERSION);
-            ImGui::Text("Renderer: %s", renderer);
-            ImGui::Text("OpenGL Version: %s", version);
-            int triangleCount = m_scene.countTriangle();
-            const char* base = "";
-            if (triangleCount > 5000) {
-                triangleCount /= 1000;
-                base = "k";
+            // OpenGL option
+            if (ImGui::CollapsingHeader("General info",
+                                        ImGuiTreeNodeFlags_DefaultOpen)) {
+                ImGui::Text(
+                    "Frame generation delay: %.3f ms/frame\n"
+                    "FPS: %.1f",
+                    1000.0f / io.Framerate, io.Framerate);
+                const GLubyte* renderer = glGetString(GL_RENDERER);
+                const GLubyte* version = glGetString(GL_VERSION);
+                ImGui::Text("Renderer: %s", renderer);
+                ImGui::Text("OpenGL Version: %s", version);
+                int triangleCount = m_scene.countTriangle();
+                const char* base = "";
+                if (triangleCount > 5000) {
+                    triangleCount /= 1000;
+                    base = "k";
+                }
+                if (triangleCount > 5000) {
+                    triangleCount /= 1000;
+                    base = "M";
+                }
+                ImGui::Text(
+                    "Scene meshes: %d\n"
+                    "Scene triangles: %d%s",
+                    (int)m_scene.countMesh(), triangleCount, base);
             }
-            if (triangleCount > 5000) {
-                triangleCount /= 1000;
-                base = "M";
+            if (ImGui::CollapsingHeader("Deep screen space info",
+                                        ImGuiTreeNodeFlags_DefaultOpen)) {
+                int surfelCount = m_dss.getSurfelCount();
+                const char* base = "";
+                if (surfelCount > 5000) {
+                    surfelCount /= 1000;
+                    base = "k";
+                }
+                if (surfelCount > 5000) {
+                    surfelCount /= 1000;
+                    base = "M";
+                }
+                ImGui::Text("Surfel count: %d%s", surfelCount, base);
             }
-            ImGui::Text(
-                "Scene meshes: %d\n"
-                "Scene triangles: %d%s",
-                (int)m_scene.countMesh(), triangleCount, base);
         }
     }
 
@@ -203,7 +222,8 @@ void DSSApplication::gui() {
         float h_img = h * 0.2,
               w_img = h_img / io.DisplaySize.y * io.DisplaySize.x;
         ImGui::SetNextWindowBgAlpha(1.0f);
-        vector<shared_ptr<Texture2D>> textures{m_scenetexture};
+        vector<shared_ptr<Texture2D>> textures{
+            m_scenetexture, m_dss.getSurfelVisualizationResult()};
         ImGui::SetNextWindowSize(ImVec2(w_img * textures.size(), h_img));
         ImGui::SetNextWindowPos(ImVec2(0, h * 0.8), ImGuiCond_Always);
         if (ImGui::Begin("Textures", nullptr,
@@ -264,6 +284,34 @@ void DSSApplication::scene() {
         m_wireframe ? GL_LINE : GL_FILL);
     logPossibleGLError();
 }
+void DSSApplication::deepScreenSpace() {
+    m_maincam.getViewMatrix(m_mvp.view);
+    m_maincam.getProjectionMatrix(m_mvp.projection);
+    m_mvpbuffer.updateData(0, sizeof(MVP), &m_mvp);
+    {
+        Framebuffer::bindDefault();
+        // surfelization
+        auto& surfelizeShader = m_dss.prepareSurfelization();
+        surfelizeShader.use();
+        surfelizeShader.setUniform("aspect", m_maincam.m_aspect);
+        surfelizeShader.setUniform("scale", 1e-2f);
+        surfelizeShader.setUniform("viewMatrix", m_maincam.getViewMatrix());
+        surfelizeShader.setUniform("fov", m_maincam.m_fov);
+        surfelizeShader.setUniform("cameraPosition", m_maincam.getPosition());
+        m_scene.draw(
+            surfelizeShader,
+            [this](const auto& scene, const auto& mesh) {
+                m_mvp.model = scene.getModelMatrix() * mesh.m_objmat;
+                m_mvp.normalMatrix = glm::transpose(glm::inverse(m_mvp.model));
+                m_mvpbuffer.updateData(0, sizeof(MVP), &m_mvp);
+            },
+            GL_FILL, DRAW_FLAG_TESSELLATION);
+        panicPossibleGLError();
+    }
+    m_dss.copySurfelData();
+    { m_dss.surfelVisualization(); }
+    { m_dss.renderSplatting(); }
+}
 void DSSApplication::clear() {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -303,6 +351,9 @@ void DSSApplication::loop() {
         skybox();
         m_scenefb.unbind();
     }
+
+    { deepScreenSpace(); }
+
     finalprocess();
 
     keyboard();

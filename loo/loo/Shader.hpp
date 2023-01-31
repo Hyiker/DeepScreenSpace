@@ -23,14 +23,27 @@
 
 namespace loo {
 
+enum class ShaderType {
+    Vertex = GL_VERTEX_SHADER,
+    Fragment = GL_FRAGMENT_SHADER,
+    TessellationControl = GL_TESS_CONTROL_SHADER,
+    TessellationEvaluation = GL_TESS_EVALUATION_SHADER,
+    Geometry = GL_GEOMETRY_SHADER
+};
+
 // Loads a shader from a file into OpenGL.
 class LOO_EXPORT Shader {
    public:
     // Load Shader from a file
     Shader(const char* shaderContent, GLenum type);
+    Shader(const char* shaderContent, ShaderType type)
+        : Shader(shaderContent, static_cast<GLenum>(type)) {}
 #ifdef OGL_46
     explicit Shader(const std::vector<unsigned char>& spirvBinary, GLenum type,
                     const char* entryPoint = "main");
+    explicit Shader(const std::vector<unsigned char>& spirvBinary,
+                    ShaderType type, const char* entryPoint = "main")
+        : Shader(spirvBinary, static_cast<GLenum>(type), entryPoint) {}
 #endif
     Shader(Shader&) = delete;
     Shader(Shader&& other);

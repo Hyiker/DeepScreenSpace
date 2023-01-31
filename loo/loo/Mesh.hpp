@@ -45,7 +45,8 @@ struct LOO_EXPORT Mesh {
     size_t countVertex() const;
     size_t countTriangles(bool lod = true) const;
 
-    void draw(ShaderProgram& sp, GLenum drawMode = GL_FILL) const;
+    void draw(ShaderProgram& sp, GLenum drawMode = GL_FILL,
+              bool tessellation = false) const;
     void updateLod(float screenProportion);
     int getLod() const { return m_lod; }
 

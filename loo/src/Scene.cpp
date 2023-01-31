@@ -66,7 +66,7 @@ void Scene::prepare() const {
 
 void Scene::draw(ShaderProgram& sp,
                  std::function<void(const Scene&, const Mesh&)> beforeDraw,
-                 GLenum drawMode) const {
+                 GLenum drawMode, int drawFlags) const {
     GLint dims[4] = {0};
     glGetIntegerv(GL_VIEWPORT, dims);
     GLint fbSize = dims[2] * dims[3];
@@ -74,21 +74,24 @@ void Scene::draw(ShaderProgram& sp,
     for (const auto& mesh : m_meshes) {
         glBeginQuery(GL_SAMPLES_PASSED, m_queryid);
         beforeDraw(*this, *mesh);
-        mesh->draw(sp, drawMode);
+        mesh->draw(sp, drawMode, drawFlags & DRAW_FLAG_TESSELLATION);
         glEndQuery(GL_SAMPLES_PASSED);
-        if (counter % 30 == 0) {
-            GLuint fragmentsPassed = 0;
-            glGetQueryObjectuiv(m_queryid, GL_QUERY_RESULT, &fragmentsPassed);
-            float meshScreenProportion = fragmentsPassed / (float)fbSize;
-            mesh->updateLod(meshScreenProportion);
-            counter = 0;
+        if (drawFlags & DRAW_FLAG_UPDATE_LOD) {
+            if (counter % 30 == 0) {
+                GLuint fragmentsPassed = 0;
+                glGetQueryObjectuiv(m_queryid, GL_QUERY_RESULT,
+                                    &fragmentsPassed);
+                float meshScreenProportion = fragmentsPassed / (float)fbSize;
+                mesh->updateLod(meshScreenProportion);
+                counter = 0;
+            }
+            counter++;
         }
-        counter++;
     }
 }
-void Scene::draw(ShaderProgram& sp, GLenum drawMode) const {
+void Scene::draw(ShaderProgram& sp, GLenum drawMode, int drawFlags) const {
     draw(
-        sp, [](const Scene&, const Mesh&) {}, drawMode);
+        sp, [](const Scene&, const Mesh&) {}, drawMode, drawFlags);
 }
 
 Scene::Scene() { glGenQueries(1, &m_queryid); }

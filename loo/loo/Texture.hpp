@@ -43,7 +43,7 @@ class LOO_EXPORT Texture {
 #endif
     }
     GLuint getId() const { return m_id; };
-    GLenum getType() const { return Target; }
+    constexpr GLenum getType() const { return Target; }
     int getMipmapLevels() const {
         unsigned int lvl = 0;
         int width = this->width, height = this->height;
@@ -103,7 +103,7 @@ class LOO_EXPORT Texture {
 };
 constexpr unsigned int TEXTURE_OPTION_MIPMAP = 0x1,
                        TEXTURE_OPTION_CONVERT_TO_LINEAR = 0x2;
-class Texture2D : public Texture<GL_TEXTURE_2D> {
+class LOO_EXPORT Texture2D : public Texture<GL_TEXTURE_2D> {
     static Texture2D whiteTexture;
     static Texture2D blackTexture;
 
@@ -118,11 +118,24 @@ class Texture2D : public Texture<GL_TEXTURE_2D> {
     static const Texture2D& getWhiteTexture();
     static const Texture2D& getBlackTexture();
 };
+
 LOO_EXPORT std::shared_ptr<Texture2D> createTexture2DFromFile(
     std::unordered_map<std::string, std::shared_ptr<Texture2D>>& uniqueTexture,
     const std::string& filename, unsigned int options);
 
-class TextureCubeMap : public Texture<GL_TEXTURE_CUBE_MAP> {
+// texture array is a special type of texture
+// it contains multiple texture with only one texture name
+class LOO_EXPORT Texture2DArray : public Texture<GL_TEXTURE_2D_ARRAY> {
+    GLsizei depth{-1};
+
+   public:
+    void setupStorage(GLsizei width, GLsizei height, GLsizei depth,
+                      GLenum internalformat, int maxLevel = -1);
+    void setupLayer(GLsizei layer, unsigned char* data, GLenum format,
+                    GLenum type);
+};
+
+class LOO_EXPORT TextureCubeMap : public Texture<GL_TEXTURE_CUBE_MAP> {
    public:
     // auto builder = TextureCubeMap::builder().
     class TextureCubeMapBuilder {
@@ -169,8 +182,7 @@ class TextureCubeMap : public Texture<GL_TEXTURE_CUBE_MAP> {
     void setupStorage(GLsizei width, GLsizei height, GLenum internalformat,
                       int maxLevel = -1);
     // face is indexed [0, 5]
-    void setupFace(GLenum face, unsigned char* data, GLenum format,
-                   GLenum type);
+    void setupFace(int face, unsigned char* data, GLenum format, GLenum type);
 };
 // we assume cubemap texture doesn't need deduplicate
 LOO_EXPORT std::shared_ptr<TextureCubeMap> createTextureCubeMapFromFiles(

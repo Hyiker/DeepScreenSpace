@@ -1,7 +1,8 @@
 #ifndef LOO_LOO_LOO_HPP
 #define LOO_LOO_LOO_HPP
-#include "predefs.hpp"
+#include <algorithm>
 
+#include "predefs.hpp"
 namespace loo {
 class Shader;
 class ShaderProgram;
@@ -38,9 +39,11 @@ constexpr int SHADER_BINDING_PORT_PBRM_NORMAL = 7;
 
 constexpr int SHADER_LIGHTS_MAX = 12;
 
-// clang-format on
+// the max binding port loo used
+// user binding port should start from SHADER_BINDING_PORT_MAX + 1
+constexpr int SHADER_BINDING_PORT_MAX = (std::max)(SHADER_BINDING_PORT_SM_HEIGHT, SHADER_BINDING_PORT_PBRM_NORMAL);
 
-extern int looBindingPortMax;
+// clang-format on
 
 // Initialize libraries include:
 // * glog
