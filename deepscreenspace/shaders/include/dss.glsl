@@ -1,3 +1,4 @@
+#pragma once
 struct SurfelData {
     vec4 position;
     vec3 normal;

@@ -6,7 +6,7 @@
 
 layout(triangles, equal_spacing,
        point_mode) in;  // triangles, equal spacing of subdivisions, only one
-                    // vertex per new coordinate
+                        // vertex per new coordinate
 
 layout(location = 0) in vec3 tcPosition[];  // Vertex positions in world space
 layout(location = 1) in vec3 tcNormal[];    // Vertex normals in model space
@@ -25,7 +25,6 @@ float computeRandomOffset(vec3 pos) {
 }
 
 void main() {
-    SurfelData surfelData;
     // Compute new position
     const vec3 p0 = gl_TessCoord.x * tcPosition[0];
     const vec3 p1 = gl_TessCoord.y * tcPosition[1];

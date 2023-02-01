@@ -54,7 +54,9 @@ class Framebuffer {
 
     void bind() const { glBindFramebuffer(GL_FRAMEBUFFER, m_fbo); }
     void unbind() const { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
-    void attachTexture(const Texture2D& tex, GLenum attachment, GLint level) {
+    template <GLenum TextureType>
+    void attachTexture(const Texture<TextureType>& tex, GLenum attachment,
+                       GLint level) {
 #ifdef OGL_46
         glNamedFramebufferTexture(m_fbo, attachment, tex.getId(), level);
 #else
@@ -63,6 +65,16 @@ class Framebuffer {
         glFramebufferTexture(GL_FRAMEBUFFER, attachment, tex.getId(), level);
         tex.unbind();
         unbind();
+#endif
+    }
+    template <GLenum TextureType>
+    void attachTextureLayer(const Texture<TextureType>& tex, GLenum attachment,
+                            GLint level, GLint layer) {
+#ifdef OGL_46
+        glNamedFramebufferTextureLayer(m_fbo, attachment, tex.getId(), level,
+                                       layer);
+#else
+        NOT_IMPLEMENTED();
 #endif
     }
     void attachRenderbuffer(const Renderbuffer& rb, GLenum attachment) {

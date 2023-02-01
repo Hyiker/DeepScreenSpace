@@ -62,21 +62,27 @@ bool sphereInFrustum(const in vec3 p, const in float r) {
 
     return true;
 }
-float computeIdealSurfelRadius(in float scale, in float dist, in float fov) {
-    return scale * tan(fov * 0.5) * dist;
+float computeIdealSurfelRadius(in float scale, in float d, in float fov) {
+    return scale * tan(fov * 0.5) * d;
 }
 float tessLevelFromRadius(in float radius, in float area) {
-    return max(
-        0, ceil(sqrt(max(0, 12 * PI * area - 3 * PI_SQR * radius * radius)) /
+    return ceil(sqrt(12 * PI * area - 3 * PI_SQR * radius * radius) /
                     (3 * PI * radius) -
-                1));
+                1);
 }
 void setTessellationLevels(in float level) {
     gl_TessLevelOuter[0] = level;
     gl_TessLevelOuter[1] = level;
     gl_TessLevelOuter[2] = level;
+    gl_TessLevelInner[0] = level;
+    gl_TessLevelInner[1] = level;
 }
-float radiusFromTessLevel(in float tessLevel, in float area) { return 1.0; }
+float radiusFromTessLevel(in float tessLevel, in float area) {
+    int i = int(tessLevel);
+    float vi =
+        (i & 1) == 1 ? (3 * sqr(ceil(i / 2.0))) : (0.75 * sqr(i) + 1.5 * i + 1);
+    return sqrt(area / (PI * vi));
+}
 
 void main() {
     // Triangle vertices
@@ -109,13 +115,15 @@ void main() {
 
         // Calculate radius of surfel and resulting tessellation level
         const float idealRadius = computeIdealSurfelRadius(scale, dist, fov);
-        const float tessLevel = tessLevelFromRadius(idealRadius, area);
+        const float tessLevel = area >= 3 * PI * idealRadius * idealRadius
+                                    ? tessLevelFromRadius(idealRadius, area)
+                                    : 1;
         if (gl_InvocationID == 0) setTessellationLevels(tessLevel);
 
         // Save the actual radius that the surfel got
-        // const float actualRadius = radiusFromTessLevel(tessLevel, area);
-        const float actualRadius = idealRadius;
-        tcRadius = idealRadius;
+        const float actualRadius = radiusFromTessLevel(tessLevel, area);
+        // const float actualRadius = idealRadius;
+        tcRadius = actualRadius;
 
         // Pass the vertex-specific attributes to the tessellation evaluation
         // shader Move vertex towards triangle center to reduce overlapping at

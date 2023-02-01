@@ -28,18 +28,15 @@ DeepScreenSpace::DeepScreenSpace(int width, int height)
     {
         // splatting
         m_splattingfb.init();
-        m_splattingresult = make_shared<Texture2D>();
-        m_splattingresult->init();
-        m_splattingresult->setup(width, height, GL_RGB32F, GL_RGB, GL_FLOAT, 1);
-        m_splattingresult->setSizeFilter(GL_LINEAR, GL_LINEAR);
         panicPossibleGLError();
+        m_splattingresult = make_shared<Texture2DArray>();
+        m_splattingresult->init();
+        // TODO modify depth
+        m_splattingresult->setupStorage(width, height, 4, GL_RGBA16F, 1);
+        m_splattingresult->setSizeFilter(GL_LINEAR, GL_LINEAR);
         m_splattingfb.attachTexture(*m_splattingresult, GL_COLOR_ATTACHMENT0,
                                     0);
-        m_splattingshuffled = make_shared<Texture2DArray>();
-        m_splattingshuffled->init();
-        // TODO modify depth
-        m_splattingshuffled->setupStorage(width, height, 4, GL_RGB8, 1);
-        m_splattingshuffled->setSizeFilter(GL_LINEAR, GL_LINEAR);
+        panicPossibleGLError();
     }
     {
         GLuint vao, vbo;
@@ -110,7 +107,6 @@ void DeepScreenSpace::renderSplatting() {
     glClearColor(0, 0, 0, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     m_splattingshader.use();
-    m_splattingshader.setTexture(0, *m_splattingshuffled);
     if (getSurfelCount()) {
         glBindVertexArray(m_surfelbuffer.vao);
         glDrawArrays(GL_POINTS, 0, getSurfelCount());

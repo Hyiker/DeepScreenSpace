@@ -19,15 +19,15 @@ class DeepScreenSpace {
     // only contains vertex & tessellation stages
     loo::ShaderProgram m_surfelizeshader;
 
+    // TODO: add position normal shuffler
+
     // splatting related
     loo::Framebuffer m_splattingfb;
     // make use of surfelize result
     loo::ShaderProgram m_splattingshader;
-    // describing how the multi-resolution buffer is partitioned and returns
-    // shuffled buffers for positions and normals
-    std::shared_ptr<loo::Texture2DArray> m_splattingshuffled;
 
-    std::shared_ptr<loo::Texture2D> m_splattingresult;
+    std::shared_ptr<loo::Texture2DArray> m_splattingresult;
+
     // surfel storage
     loo::ShaderStorageBuffer m_surfelssbo;
     loo::AtomicCounter m_surfelcounter;

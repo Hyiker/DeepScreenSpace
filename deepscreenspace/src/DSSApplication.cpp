@@ -16,6 +16,9 @@
 #include "shaders/base.vert.hpp"
 #include "shaders/skybox.frag.hpp"
 #include "shaders/skybox.vert.hpp"
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include "glm/ext.hpp"
 using namespace loo;
 using namespace std;
 
@@ -284,6 +287,12 @@ void DSSApplication::scene() {
         m_wireframe ? GL_LINE : GL_FILL);
     logPossibleGLError();
 }
+// Deep screen space process:
+// 1. shuffle scene position and normal onto each layer of  multiresolution
+//    texture array
+// 2. scene surfelization
+// 3. apply splatting for each surfel and each multi-resolution texture layer
+//    save the shading result in a multi-layer texture array
 void DSSApplication::deepScreenSpace() {
     m_maincam.getViewMatrix(m_mvp.view);
     m_maincam.getProjectionMatrix(m_mvp.projection);
@@ -294,7 +303,7 @@ void DSSApplication::deepScreenSpace() {
         auto& surfelizeShader = m_dss.prepareSurfelization();
         surfelizeShader.use();
         surfelizeShader.setUniform("aspect", m_maincam.m_aspect);
-        surfelizeShader.setUniform("scale", 1e-2f);
+        surfelizeShader.setUniform("scale", 1e-3f);
         surfelizeShader.setUniform("viewMatrix", m_maincam.getViewMatrix());
         surfelizeShader.setUniform("fov", m_maincam.m_fov);
         surfelizeShader.setUniform("cameraPosition", m_maincam.getPosition());
