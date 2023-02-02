@@ -120,7 +120,7 @@ void DeepScreenSpace::initPartition() {
             for (int k = 0; k < s * s; k++) {
                 ivec2 out_offset((k % s) * width_s, (k / s) * height_s);
                 ivec2 sub_pos(out_offset + in_offset);
-                int m = k;
+                int m = shuffleIndex[k];
                 ivec2 buffer_offset(m % s, m / s);
                 ivec2 buffer_pos = buffer_base + buffer_offset;
                 buffer[sub_pos.x + sub_pos.y * m_width] =
