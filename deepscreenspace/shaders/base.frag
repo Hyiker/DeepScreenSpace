@@ -11,8 +11,12 @@ layout(location = 2) in vec2 vTexCoord;
 layout(location = 3) in vec3 vTangent;
 layout(location = 4) in vec3 vBitangent;
 
-out vec4 FragColor;
+layout(location = 0) out vec4 FragColor;
+layout(location = 1) out vec3 FragNormal;
+layout(location = 2) out vec3 FragPosition;
+
 uniform vec3 uCameraPosition;
+
 layout(location = 18) uniform bool enableNormal;
 layout(location = 19) uniform bool enableParallax;
 layout(location = 20) uniform bool enableLodVisualize;
@@ -85,4 +89,6 @@ void main() {
               ambientIntensity;
     color += La;
     FragColor = vec4(color, 1.0);
+    FragNormal = normalize(vNormal);
+    FragPosition = vPos;
 }

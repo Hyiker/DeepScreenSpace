@@ -57,6 +57,7 @@ class DSSApplication : public loo::Application {
     loo::Framebuffer m_scenefb;
     loo::Renderbuffer m_scenedepthrb;
     std::shared_ptr<loo::Texture2D> m_scenetexture;
+    std::shared_ptr<loo::Texture2D> m_sceneposition, m_scenenormal;
 
     // scene surfelize
     loo::Framebuffer m_surfelizefb;
@@ -68,6 +69,7 @@ class DSSApplication : public loo::Application {
     FinalProcess m_finalprocess;
 
     // Deep screen space
+    int m_dss_partitiondebuglayer{1};
     DeepScreenSpace m_dss;
 
     bool m_wireframe{};

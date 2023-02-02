@@ -130,14 +130,27 @@ DSSApplication::DSSApplication(int width, int height, const char* skyBoxPrefix)
         m_scenefb.init();
         m_scenetexture = make_shared<Texture2D>();
         m_scenetexture->init();
-        m_scenetexture->setup(getWidth(), getHeight(), GL_RGB32F, GL_RGB,
-                              GL_FLOAT, 1);
+        m_scenetexture->setupStorage(getWidth(), getHeight(), GL_RGB32F, 1);
         m_scenetexture->setSizeFilter(GL_LINEAR, GL_LINEAR);
         panicPossibleGLError();
+
+        m_scenenormal = make_shared<Texture2D>();
+        m_scenenormal->init();
+        m_scenenormal->setupStorage(getWidth(), getHeight(), GL_RGB8, 1);
+        m_scenenormal->setSizeFilter(GL_NEAREST, GL_NEAREST);
+
+        m_sceneposition = make_shared<Texture2D>();
+        m_sceneposition->init();
+        m_sceneposition->setupStorage(getWidth(), getHeight(), GL_RGB32F, 1);
+        m_sceneposition->setSizeFilter(GL_NEAREST, GL_NEAREST);
+
         m_scenedepthrb.init(GL_DEPTH_COMPONENT32, getWidth(), getHeight());
 
         m_scenefb.attachTexture(*m_scenetexture, GL_COLOR_ATTACHMENT0, 0);
+        m_scenefb.attachTexture(*m_scenenormal, GL_COLOR_ATTACHMENT1, 0);
+        m_scenefb.attachTexture(*m_sceneposition, GL_COLOR_ATTACHMENT2, 0);
         m_scenefb.attachRenderbuffer(m_scenedepthrb, GL_DEPTH_ATTACHMENT);
+
         m_finalprocess.init();
     }
     panicPossibleGLError();
@@ -219,6 +232,15 @@ void DSSApplication::gui() {
                 ImGui::Checkbox("Parallax mapping", &m_enableparallax);
                 ImGui::Checkbox("Visualize lod", &m_lodvisualize);
             }
+            // Deep screen space option
+            if (ImGui::CollapsingHeader("Deep screen space options",
+                                        ImGuiTreeNodeFlags_DefaultOpen)) {
+                ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.45f);
+
+                ImGui::SliderInt("Partition layer", &m_dss_partitiondebuglayer,
+                                 0, N_PARTITION_LAYERS - 1);
+                ImGui::PopItemWidth();
+            }
         }
     }
     {
@@ -226,8 +248,9 @@ void DSSApplication::gui() {
               w_img = h_img / io.DisplaySize.y * io.DisplaySize.x;
         ImGui::SetNextWindowBgAlpha(1.0f);
         vector<shared_ptr<Texture2D>> textures{
-            m_scenetexture, m_dss.getSurfelVisualizationResult()};
-        ImGui::SetNextWindowSize(ImVec2(w_img * textures.size(), h_img));
+            m_scenetexture, m_dss.getSurfelVisualizationResult(), m_scenenormal,
+            m_dss.getPartitionedNormal(m_dss_partitiondebuglayer)};
+        ImGui::SetNextWindowSize(ImVec2(w_img * textures.size() + 40, h_img));
         ImGui::SetNextWindowPos(ImVec2(0, h * 0.8), ImGuiCond_Always);
         if (ImGui::Begin("Textures", nullptr,
                          windowFlags | ImGuiWindowFlags_NoDecoration)) {
@@ -297,6 +320,7 @@ void DSSApplication::deepScreenSpace() {
     m_maincam.getViewMatrix(m_mvp.view);
     m_maincam.getProjectionMatrix(m_mvp.projection);
     m_mvpbuffer.updateData(0, sizeof(MVP), &m_mvp);
+    { m_dss.shufflePartition(*m_globalquad, m_scenenormal, m_sceneposition); }
     {
         Framebuffer::bindDefault();
         // surfelization
@@ -322,7 +346,7 @@ void DSSApplication::deepScreenSpace() {
     { m_dss.renderSplatting(); }
 }
 void DSSApplication::clear() {
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClearColor(0.f, 0.f, 0.f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     logPossibleGLError();
 }
@@ -353,10 +377,12 @@ void DSSApplication::loop() {
     {
         m_scenefb.bind();
 
+        m_scenefb.enableAttachments(
+            {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2});
         clear();
-
         scene();
 
+        m_scenefb.enableAttachments({GL_COLOR_ATTACHMENT0});
         skybox();
         m_scenefb.unbind();
     }

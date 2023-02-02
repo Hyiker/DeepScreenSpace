@@ -16,7 +16,7 @@ void ShadowMap::init() {
     m_renderbuffer.init(GL_DEPTH_COMPONENT, m_width, m_height);
 
     m_moments.init();
-    m_moments.setup(m_width, m_height, GL_RGBA16, GL_RGBA, GL_FLOAT, 0);
+    m_moments.setupStorage(m_width, m_height, GL_RGBA16, 0);
     m_moments.setSizeFilter(GL_LINEAR, GL_LINEAR);
 
     m_framebuffer.attachTexture(m_moments, GL_COLOR_ATTACHMENT0, 0);

@@ -2,8 +2,12 @@
 #define LOO_LOO_FRAMEBUFFER_HPP
 #include <glad/glad.h>
 
+#include <set>
+
 #include "Texture.hpp"
+#include "glog/logging.h"
 #include "predefs.hpp"
+
 namespace loo {
 
 class LOO_EXPORT Renderbuffer {
@@ -34,6 +38,7 @@ class LOO_EXPORT Renderbuffer {
 };
 class Framebuffer {
     GLuint m_fbo{GL_INVALID_INDEX};
+    std::set<GLenum> m_attachments;
 
    public:
     Framebuffer() = default;
@@ -66,6 +71,7 @@ class Framebuffer {
         tex.unbind();
         unbind();
 #endif
+        m_attachments.insert(attachment);
     }
     template <GLenum TextureType>
     void attachTextureLayer(const Texture<TextureType>& tex, GLenum attachment,
@@ -76,6 +82,7 @@ class Framebuffer {
 #else
         NOT_IMPLEMENTED();
 #endif
+        m_attachments.insert(attachment);
     }
     void attachRenderbuffer(const Renderbuffer& rb, GLenum attachment) {
 #ifdef OGL_46
@@ -87,6 +94,20 @@ class Framebuffer {
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER,
                                   rb.getId());
         rb.unbind();
+        unbind();
+#endif
+    }
+    // call glDrawBuffers to enable attachments
+    void enableAttachments(const std::vector<GLenum>& attachments) {
+        for (auto attachment : attachments) {
+            CHECK_NE(m_attachments.count(attachment), 0);
+        }
+#ifdef OGL_46
+        glNamedFramebufferDrawBuffers(m_fbo, attachments.size(),
+                                      attachments.data());
+#else
+        bind();
+        glDrawBuffers(attachments.size(), attachments.data());
         unbind();
 #endif
     }

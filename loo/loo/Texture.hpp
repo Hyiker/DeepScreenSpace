@@ -108,10 +108,9 @@ class LOO_EXPORT Texture2D : public Texture<GL_TEXTURE_2D> {
     static Texture2D blackTexture;
 
    public:
-    void setup(GLsizei width, GLsizei height, GLenum internalformat,
-               GLenum format, GLenum type, GLsizei maxLevel) {
-        setup(nullptr, width, height, internalformat, format, type, maxLevel);
-    }
+    // storage only
+    void setupStorage(GLsizei width, GLsizei height, GLenum internalformat,
+                      GLsizei maxLevel);
     void setup(unsigned char* data, GLsizei width, GLsizei height,
                GLenum internalformat, GLenum format, GLenum type,
                GLint maxLevel = -1);
@@ -131,7 +130,7 @@ class LOO_EXPORT Texture2DArray : public Texture<GL_TEXTURE_2D_ARRAY> {
    public:
     void setupStorage(GLsizei width, GLsizei height, GLsizei depth,
                       GLenum internalformat, int maxLevel = -1);
-    void setupLayer(GLsizei layer, unsigned char* data, GLenum format,
+    void setupLayer(GLsizei layer, const void* data, GLenum format,
                     GLenum type);
 };
 

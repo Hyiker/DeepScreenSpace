@@ -14,6 +14,7 @@ struct SurfelData {
     float radius;
 };
 constexpr int N_SURFELS_MAX = 2000000;
+constexpr int N_PARTITION_LAYERS = 3;
 class DeepScreenSpace {
     // mesh surfelize shader
     // only contains vertex & tessellation stages
@@ -42,9 +43,30 @@ class DeepScreenSpace {
         GLuint vao;
         GLuint vbo;
     } m_surfelbuffer;
+    // this texture describes how framebuffer is partitioned(shuffled)
+    // on the different layers
+    std::shared_ptr<loo::Texture2DArray> m_fbpartitiontex;
+    std::shared_ptr<loo::Texture2DArray> m_partitionedposition,
+        m_partitionednormal;
+    // debug display
+    std::shared_ptr<loo::Texture2D> m_partitionedpositiondebug,
+        m_partitionednormaldebug;
+
+    // framebuffer for
+    loo::Framebuffer m_partitionfb;
+    loo::ShaderProgram m_shuffleshader;
+    int m_width, m_height;
 
    public:
     DeepScreenSpace(int width, int height);
+
+    void initPartition();
+
+    void shufflePartition(
+        const loo::Quad& quad,
+        std::shared_ptr<loo::Texture2D> originalNormalTexture,
+        std::shared_ptr<loo::Texture2D> originalPositionTexture);
+
     int getSurfelCount() const;
     // prepare surfelization shader
     // no framebuffer is needed in this pass
@@ -60,6 +82,10 @@ class DeepScreenSpace {
 
     auto getSplattingResult() const { return m_splattingresult; }
     auto getSurfelVisualizationResult() const { return m_surfelvistex; }
+    auto getPartitionedPosition() const { return m_partitionedposition; }
+    auto getPartitionedNormal() const { return m_partitionednormal; }
+    std::shared_ptr<loo::Texture2D> getPartitionedPosition(int layer);
+    std::shared_ptr<loo::Texture2D> getPartitionedNormal(int layer);
 };
 
 #endif /* DEEPSCREENSPACE_INCLUDE_DEEP_SCREEN_SPACE_HPP */

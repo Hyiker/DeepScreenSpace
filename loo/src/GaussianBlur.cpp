@@ -13,12 +13,12 @@ GaussianBlur::GaussianBlur(GLsizei width, GLsizei height)
 
 void GaussianBlur::init(GLenum internalformat, GLenum format, GLenum type) {
     m_texs[0].init();
-    m_texs[0].setup(m_width, m_height, internalformat, format, type, 0);
+    m_texs[0].setupStorage(m_width, m_height, internalformat, 0);
     m_texs[0].setSizeFilter(GL_LINEAR, GL_LINEAR);
     m_texs[0].setWrapFilter(GL_CLAMP_TO_EDGE);
 
     m_texs[1].init();
-    m_texs[1].setup(m_width, m_height, internalformat, format, type, 0);
+    m_texs[1].setupStorage(m_width, m_height, internalformat, 0);
     m_texs[1].setSizeFilter(GL_LINEAR, GL_LINEAR);
     m_texs[1].setWrapFilter(GL_CLAMP_TO_EDGE);
 

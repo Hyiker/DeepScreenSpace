@@ -89,6 +89,21 @@ std::shared_ptr<Texture2D> createTexture2DFromFile(
     LOG(INFO) << "2D Texture " << filename << " loaded.";
     return tex;
 }
+void Texture2D::setupStorage(GLsizei width, GLsizei height,
+                             GLenum internalformat, GLsizei maxLevel) {
+    this->width = width;
+    this->height = height;
+#ifdef OGL_46
+    // prepare storage
+    glTextureStorage2D(m_id, maxLevel == -1 ? getMipmapLevels() : maxLevel,
+                       internalformat, width, height);
+    panicPossibleGLError();
+#else
+    bind();
+    glTexStorage2D(Target, level, internalformat, width, height);
+    unbind();
+#endif
+}
 
 void Texture2D::setup(unsigned char* data, GLsizei width, GLsizei height,
                       GLenum internalformat, GLenum format, GLenum type,
@@ -155,12 +170,13 @@ void Texture2DArray::setupStorage(GLsizei width, GLsizei height, GLsizei depth,
 #ifdef OGL_46
     glTextureStorage3D(m_id, maxLevel == -1 ? getMipmapLevels() : maxLevel,
                        internalformat, width, height, depth);
+    panicPossibleGLError();
 #else
     NOT_IMPLEMENTED();
 #endif
 }
-void Texture2DArray::setupLayer(GLsizei layer, unsigned char* data,
-                                GLenum format, GLenum type) {
+void Texture2DArray::setupLayer(GLsizei layer, const void* data, GLenum format,
+                                GLenum type) {
     CHECK_GE(layer, 0);
     CHECK_LT(layer, depth);
 #ifdef OGL_46
