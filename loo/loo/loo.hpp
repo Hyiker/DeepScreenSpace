@@ -17,6 +17,7 @@ constexpr int SHADER_BINDING_PORT_SKYBOX = 0;
 
 // light binding
 constexpr int SHADER_BINDING_LIGHTS = 1;
+constexpr int SHADER_BINDING_PORT_NLIGHTS = 114;
 
 // simple material binding
 constexpr int SHADER_BINDING_PORT_SM_PARAMS = 2;

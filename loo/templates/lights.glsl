@@ -1,4 +1,7 @@
+#ifndef LOO_TEMPLATES_LIGHTS_GLSL
+#define LOO_TEMPLATES_LIGHTS_GLSL
 // clang-format off
+
 struct ShaderLight {
     // spot, point
     vec4 position;
@@ -18,4 +21,6 @@ const int LIGHT_TYPE_SPOT = 0, LIGHT_TYPE_POINT = 1, LIGHT_TYPE_DIRECTIONAL = 2;
 layout(std140, binding = %SHADER_BINDING_LIGHTS%) uniform LightBlock{
     ShaderLight lights[%SHADER_LIGHTS_MAX%];
 };
-uniform int nLights;
+layout(location = %SHADER_BINDING_PORT_NLIGHTS%) uniform int nLights;
+
+#endif /* LOO_TEMPLATES_LIGHTS_GLSL */

@@ -7,20 +7,14 @@
 #include <loo/ShaderStorageBuffer.hpp>
 #include <loo/Texture.hpp>
 #include <memory>
-struct SurfelData {
-    // use vec4 to get it aligned
-    glm::vec4 position;
-    glm::vec3 normal;
-    float radius;
-};
+
+#include "Surfel.hpp"
 constexpr int N_SURFELS_MAX = 2000000;
 constexpr int N_PARTITION_LAYERS = 3;
 class DeepScreenSpace {
     // mesh surfelize shader
     // only contains vertex & tessellation stages
     loo::ShaderProgram m_surfelizeshader;
-
-    // TODO: add position normal shuffler
 
     // splatting related
     loo::Framebuffer m_splattingfb;

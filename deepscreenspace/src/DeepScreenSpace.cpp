@@ -7,9 +7,10 @@
 #include <vector>
 
 #include "glog/logging.h"
-#include "shaders/base.vert.hpp"
 #include "shaders/positionNormalShuffler.frag.hpp"
 #include "shaders/positionNormalShuffler.vert.hpp"
+#include "shaders/splatting.frag.hpp"
+#include "shaders/splatting.geom.hpp"
 #include "shaders/splatting.vert.hpp"
 #include "shaders/surfelize.tesc.hpp"
 #include "shaders/surfelize.tese.hpp"
@@ -27,7 +28,9 @@ DeepScreenSpace::DeepScreenSpace(int width, int height)
                         Shader(SURFELIZE_TESC, ShaderType::TessellationControl),
                         Shader(SURFELIZE_TESE,
                                ShaderType::TessellationEvaluation)},
-      m_splattingshader{Shader(SPLATTING_VERT, ShaderType::Vertex)},
+      m_splattingshader{Shader(SPLATTING_VERT, ShaderType::Vertex),
+                        Shader(SPLATTING_GEOM, ShaderType::Geometry),
+                        Shader(SPLATTING_FRAG, ShaderType::Fragment)},
       m_surfelssbo(loo::SHADER_BINDING_PORT_MAX + 1,
                    N_SURFELS_MAX * sizeof(SurfelData)),
       m_surfelcounter(0),
@@ -63,7 +66,7 @@ DeepScreenSpace::DeepScreenSpace(int width, int height)
                         nullptr, GL_DYNAMIC_STORAGE_BIT);
         SurfelData sd{};
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(SurfelData), &sd);
-        // position
+
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(SurfelData),
                               (GLvoid*)offsetof(SurfelData, position));
         glEnableVertexAttribArray(0);
@@ -71,6 +74,11 @@ DeepScreenSpace::DeepScreenSpace(int width, int height)
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(SurfelData),
                               (GLvoid*)(offsetof(SurfelData, normal)));
         glEnableVertexAttribArray(1);
+
+        glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(SurfelData),
+                              (GLvoid*)(offsetof(SurfelData, radius)));
+        glEnableVertexAttribArray(2);
+
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
 

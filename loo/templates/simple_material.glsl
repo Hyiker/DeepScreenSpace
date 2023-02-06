@@ -1,3 +1,5 @@
+#ifndef LOO_TEMPLATES_SIMPLE_MATERIAL_GLSL
+#define LOO_TEMPLATES_SIMPLE_MATERIAL_GLSL
 // clang-format off
 layout(binding = %SHADER_BINDING_PORT_SKYBOX%) uniform samplerCube skyboxTex;
 layout(std140, binding = %SHADER_BINDING_PORT_PBRM_PARAMS%) uniform SimpleMaterial {
@@ -17,3 +19,5 @@ layout(binding = %SHADER_BINDING_PORT_SM_NORMAL%) uniform sampler2D normalTex;
 layout(binding = %SHADER_BINDING_PORT_SM_OPACITY%) uniform sampler2D opacityTex;
 layout(binding = %SHADER_BINDING_PORT_SM_HEIGHT%) uniform sampler2D heightTex;
 // clang-format on
+
+#endif /* LOO_TEMPLATES_SIMPLE_MATERIAL_GLSL */

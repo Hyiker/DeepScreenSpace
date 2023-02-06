@@ -1,6 +1,5 @@
-#pragma once
-
-// 2D
+#ifndef DEEPSCREENSPACE_SHADERS_INCLUDE_TEXEL_FETCH_GLSL
+#define DEEPSCREENSPACE_SHADERS_INCLUDE_TEXEL_FETCH_GLSL
 vec4 texelFetch2DClamp(const in sampler2D sampler, const in ivec2 texCoord,
                        const in int level) {
     return texelFetch(
@@ -183,3 +182,5 @@ bool fragOffsetInSampler(const sampler2D s, const ivec2 offset) {
     return all(lessThan(ivec2(gl_FragCoord.xy) + offset, textureSize(s, 0))) &&
            all(greaterThan(ivec2(gl_FragCoord.xy) + offset, ivec2(-1)));
 }
+
+#endif /* DEEPSCREENSPACE_SHADERS_INCLUDE_TEXEL_FETCH_GLSL */
