@@ -85,8 +85,11 @@ DeepScreenSpace::DeepScreenSpace(int width, int height)
         m_surfelvistex->setupStorage(width, height, GL_RGB32F, 1);
         m_surfelvistex->setSizeFilter(GL_LINEAR, GL_LINEAR);
         panicPossibleGLError();
+        Renderbuffer surfelizerb;
+        surfelizerb.init(GL_DEPTH_COMPONENT32, width, height);
 
         m_surfelvisfb.attachTexture(*m_surfelvistex, GL_COLOR_ATTACHMENT0, 0);
+        m_surfelvisfb.attachRenderbuffer(surfelizerb, GL_DEPTH_ATTACHMENT);
     }
     { initPartition(); }
 }
@@ -188,7 +191,8 @@ ShaderProgram& DeepScreenSpace::prepareSurfelization() {
 void DeepScreenSpace::surfelVisualization() {
     m_surfelvisfb.bind();
     glClearColor(0, 0, 0, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
     glEnable(GL_PROGRAM_POINT_SIZE);
     m_surfelvisshader.use();
     if (getSurfelCount()) {

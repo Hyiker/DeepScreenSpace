@@ -248,7 +248,7 @@ void DSSApplication::gui() {
               w_img = h_img / io.DisplaySize.y * io.DisplaySize.x;
         ImGui::SetNextWindowBgAlpha(1.0f);
         vector<shared_ptr<Texture2D>> textures{
-            m_scenetexture, m_dss.getSurfelVisualizationResult(), m_scenenormal,
+            m_scenetexture, m_dss.getSurfelVisualizationResult(),
             m_dss.getPartitionedNormal(m_dss_partitiondebuglayer)};
         ImGui::SetNextWindowSize(ImVec2(w_img * textures.size() + 40, h_img));
         ImGui::SetNextWindowPos(ImVec2(0, h * 0.8), ImGuiCond_Always);
