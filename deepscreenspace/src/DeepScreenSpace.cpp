@@ -1,6 +1,7 @@
 #include "DeepScreenSpace.hpp"
 
 #include <algorithm>
+#include <loo/Camera.hpp>
 #include <memory>
 #include <numeric>
 #include <random>
@@ -17,6 +18,7 @@
 #include "shaders/surfelize.vert.hpp"
 #include "shaders/surfelizeVisualize.frag.hpp"
 #include "shaders/surfelizeVisualize.vert.hpp"
+
 #define GLM_ENABLE_EXPERIMENTAL
 #include "glm/ext.hpp"
 using namespace loo;
@@ -46,11 +48,10 @@ DeepScreenSpace::DeepScreenSpace(int width, int height)
         // splatting
         m_splattingfb.init();
         panicPossibleGLError();
-        m_splattingresult = make_shared<Texture2DArray>();
+        m_splattingresult = make_shared<Texture2D>();
         m_splattingresult->init();
         // TODO modify depth
-        m_splattingresult->setupStorage(width, height, N_PARTITION_LAYERS,
-                                        GL_RGBA16F, 1);
+        m_splattingresult->setupStorage(width, height, GL_RGBA16F, 1);
         m_splattingresult->setSizeFilter(GL_LINEAR, GL_LINEAR);
         m_splattingfb.attachTexture(*m_splattingresult, GL_COLOR_ATTACHMENT0,
                                     0);
@@ -149,7 +150,7 @@ void DeepScreenSpace::initPartition() {
     m_partitionedposition = make_shared<Texture2DArray>();
     m_partitionedposition->init();
     m_partitionedposition->setupStorage(m_width, m_height, N_PARTITION_LAYERS,
-                                        GL_RGB32F, 1);
+                                        GL_RGBA32F, 1);
 
     m_partitionednormaldebug = make_shared<Texture2D>();
     m_partitionednormaldebug->init();
@@ -210,14 +211,23 @@ void DeepScreenSpace::surfelVisualization() {
     m_surfelvisfb.unbind();
 }
 
-void DeepScreenSpace::renderSplatting() {
+void DeepScreenSpace::renderSplatting(const loo::Camera& camera) {
     m_splattingfb.bind();
     glClearColor(0, 0, 0, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     m_splattingshader.use();
     if (getSurfelCount()) {
+        m_splattingshader.setUniform("cameraPos", camera.getPosition());
+        m_splattingshader.setUniform("viewMatrix", camera.getViewMatrix());
+        m_splattingshader.setUniform("projectionMatrix",
+                                     camera.getProjectionMatrix());
+        m_splattingshader.setUniform("framebufferDeviceStep.resolution",
+                                     ivec2(m_width, m_height));
+        m_splattingshader.setUniform("fov", camera.m_fov);
         glBindVertexArray(m_surfelbuffer.vao);
-        glDrawArrays(GL_POINTS, 0, getSurfelCount());
+        glDrawArraysInstanced(GL_POINTS, 0, getSurfelCount(),
+                              N_PARTITION_LAYERS);
+        logPossibleGLError();
     }
     m_splattingfb.unbind();
 }

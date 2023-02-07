@@ -14,17 +14,17 @@ flat out float geometryOuterRadius;
 flat out float geometryMaxDistance;
 flat out ivec4 geometrySubBufferBounds;
 
-layout(location = 38) uniform float minimalEffect;
-layout(location = 37) uniform float maxDistance;
-layout(location = 36) uniform float cameraPos;
-layout(location = 35) uniform mat4 viewMatrix;
+layout(location = 30) uniform float minimalEffect = 1e-2;
+layout(location = 31) uniform float maxDistance = 100.0;
+layout(location = 32) uniform vec3 cameraPos;
+layout(location = 33) uniform mat4 viewMatrix;
 layout(location = 34) uniform mat4 projectionMatrix;
-layout(location = 33) uniform sampler2D minMapTexture2D;
-layout(location = 32) uniform sampler2D maxMapTexture2D;
-layout(location = 31) uniform struct FB {
+layout(location = 35) uniform sampler2D minMapTexture2D;
+layout(location = 36) uniform sampler2D maxMapTexture2D;
+layout(location = 37) uniform struct FB {
     ivec2 resolution;
 } framebufferDeviceStep;
-layout(location = 30) uniform float fov;
+layout(location = 38) uniform float fov;
 
 void readMinMaxMipMap(const in ivec2 mipCoord, const in int mipLevel,
                       out vec3 minTexel, out vec3 maxTexel) {
@@ -90,7 +90,7 @@ void emit(const in vec3 position, const in float surfelRadius,
     float projectedDistance = dot(position - cameraPos, cameraZ);
     gl_PointSize = int(ceil(maximumDistance(vertexSurfel[0], minimalEffect) *
                             framebufferDeviceStep.resolution.y /
-                            (projectedDistance * tan(0.5 * degToRad(fov)))));
+                            (projectedDistance * tan(0.5 * fov))));
 
 #ifdef USE_MIN_MAX_MIP_MAP
     // Culling against min-max mip map
@@ -123,7 +123,7 @@ void emit(const in vec3 position, const in float surfelRadius,
     EmitVertex();
 }
 
-#define MOVE_FIRST_LEVEL_TO_SECOND 1
+// #define MOVE_FIRST_LEVEL_TO_SECOND 1
 
 void main() {
     //// Draw only a range of primitives (for debugging purposes)

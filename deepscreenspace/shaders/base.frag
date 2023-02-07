@@ -13,7 +13,7 @@ layout(location = 4) in vec3 vBitangent;
 
 layout(location = 0) out vec4 FragColor;
 layout(location = 1) out vec3 FragNormal;
-layout(location = 2) out vec3 FragPosition;
+layout(location = 2) out vec4 FragPosition;
 
 uniform vec3 uCameraPosition;
 
@@ -83,12 +83,12 @@ void main() {
         vec3 Ls = texture(specularTex, texCoord).rgb *
                   simpleMaterial.specular.rgb * attenuation *
                   pow(max(0.0, dot(H, sNormal)), simpleMaterial.shininess);
-        color += Ld + Ls;
+        color += light.color.rgb * (Ld + Ls);
     }
     vec3 La = texture(ambientTex, texCoord).rgb * simpleMaterial.ambient.rgb *
               ambientIntensity;
     color += La;
     FragColor = vec4(color, 1.0);
     FragNormal = normalize(vNormal);
-    FragPosition = vPos;
+    FragPosition = vec4(vPos, 1);
 }

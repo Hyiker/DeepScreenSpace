@@ -21,7 +21,7 @@ struct ShaderLight {
 const int LIGHT_TYPE_SPOT = 0, LIGHT_TYPE_POINT = 1, LIGHT_TYPE_DIRECTIONAL = 2;
 layout(std140, binding = 1) uniform LightBlock{
     ShaderLight lights[12];
+    int nLights;
 };
-layout(location = 114) uniform int nLights;
 
 #endif /* LOO_TEMPLATES_LIGHTS_GLSL */

@@ -11,10 +11,10 @@ struct SplatReceiver {
     vec3 normal;
 };
 
-layout(location = 80) uniform float eta;
-layout(location = 81) uniform float clampDistance;
+layout(location = 80) uniform float eta = 1.5;
+layout(location = 81) uniform float clampDistance = 10.0;
 layout(location = 82) uniform sampler2DArray coefficientTexture2DArray;
-layout(location = 83) uniform float sizeFactor;
+layout(location = 83) uniform float sizeFactor = 5.0;
 
 vec3 computeIrradiance(in vec3 position, in vec3 normal) {
     vec3 irradiance = vec3(0.0);
@@ -29,7 +29,7 @@ vec3 computeIrradiance(in vec3 position, in vec3 normal) {
             default:
                 continue;
         }
-        float attenuation = light.intensity / (distance * distance);
+        float attenuation = light.intensity;
         vec3 Ld =
             light.color.rgb * vec3(attenuation * max(dot(L, normal), 0.0));
         irradiance += Ld;

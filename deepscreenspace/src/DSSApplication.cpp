@@ -87,7 +87,7 @@ DSSApplication::DSSApplication(int width, int height, const char* skyBoxPrefix)
       m_maincam(),
       m_mvpbuffer(0, sizeof(MVP)),
       m_lightsbuffer(SHADER_BINDING_LIGHTS,
-                     sizeof(ShaderLight) * SHADER_LIGHTS_MAX),
+                     sizeof(ShaderLight) * SHADER_LIGHTS_MAX + sizeof(GLint)),
       m_globalquad(make_shared<Quad>()),
       m_finalprocess(getWidth(), getHeight(), m_globalquad),
       m_dss(getWidth(), getHeight()) {
@@ -123,7 +123,7 @@ DSSApplication::DSSApplication(int width, int height, const char* skyBoxPrefix)
     // scene light
     {
         m_lights.push_back(
-            createDirectionalLight(glm::vec3(-1, -1, 0), glm::vec3(1, 1, 0)));
+            createDirectionalLight(glm::vec3(-1, -1, 0), glm::vec3(1, 1, 1)));
     }
     // final pass related
     {
@@ -141,7 +141,7 @@ DSSApplication::DSSApplication(int width, int height, const char* skyBoxPrefix)
 
         m_sceneposition = make_shared<Texture2D>();
         m_sceneposition->init();
-        m_sceneposition->setupStorage(getWidth(), getHeight(), GL_RGB32F, 1);
+        m_sceneposition->setupStorage(getWidth(), getHeight(), GL_RGBA32F, 1);
         m_sceneposition->setSizeFilter(GL_NEAREST, GL_NEAREST);
 
         m_scenedepthrb.init(GL_DEPTH_COMPONENT32, getWidth(), getHeight());
@@ -218,6 +218,7 @@ void DSSApplication::gui() {
             // Sun
             if (ImGui::CollapsingHeader("Sun",
                                         ImGuiTreeNodeFlags_DefaultOpen)) {
+                ImGui::ColorPicker3("Color", (float*)&m_lights[0].color);
                 ImGui::SliderFloat3("Direction", (float*)&m_lights[0].direction,
                                     -1, 1);
                 ImGui::SliderFloat("Intensity", (float*)&m_lights[0].intensity,
@@ -249,7 +250,8 @@ void DSSApplication::gui() {
         ImGui::SetNextWindowBgAlpha(1.0f);
         vector<shared_ptr<Texture2D>> textures{
             m_scenetexture, m_dss.getSurfelVisualizationResult(),
-            m_dss.getPartitionedNormal(m_dss_partitiondebuglayer)};
+            m_dss.getPartitionedNormal(m_dss_partitiondebuglayer),
+            m_dss.getSplattingResult()};
         ImGui::SetNextWindowSize(ImVec2(w_img * textures.size() + 40, h_img));
         ImGui::SetNextWindowPos(ImVec2(0, h * 0.8), ImGuiCond_Always);
         if (ImGui::Begin("Textures", nullptr,
@@ -292,7 +294,9 @@ void DSSApplication::scene() {
     {
         m_lightsbuffer.updateData(0, sizeof(ShaderLight) * m_lights.size(),
                                   m_lights.data());
-        m_baseshader.setUniform("nLights", (int)m_lights.size());
+        GLint nLights = m_lights.size();
+        m_lightsbuffer.updateData(sizeof(ShaderLight) * SHADER_LIGHTS_MAX,
+                                  sizeof(GLint), &nLights);
     }
     m_baseshader.setUniform("uCameraPosition", m_maincam.getPosition());
     m_baseshader.setUniform("enableNormal", m_enablenormal);
@@ -343,10 +347,10 @@ void DSSApplication::deepScreenSpace() {
     }
     m_dss.copySurfelData();
     { m_dss.surfelVisualization(); }
-    { m_dss.renderSplatting(); }
+    { m_dss.renderSplatting(m_maincam); }
 }
 void DSSApplication::clear() {
-    glClearColor(0.f, 0.f, 0.f, 1.0f);
+    glClearColor(0.f, 0.f, 0.f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     logPossibleGLError();
 }

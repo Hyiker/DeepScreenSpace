@@ -5,8 +5,9 @@
 #include "include/positionNormal.glsl"
 #include "include/sss.glsl"
 
-layout(location = 0) out vec4 colorTexture2DFramebuffer;
-layout(location = 41) uniform float strength;
+layout(location = 0) out vec4 fragColor;
+
+layout(location = 41) uniform float strength = 10.0;
 
 in Surfel geometrySurfel;
 
@@ -21,13 +22,16 @@ void main() {
     const float distanceToSurfel =
         length(vec3(pixelPosition) - geometrySurfel.position);
 
-    if (pixelPosition.a > 0.0 && distanceToSurfel < geometryOuterRadius &&
-        distanceToSurfel > geometryInnerRadius)
-        colorTexture2DFramebuffer = vec4(
+    if (pixelPosition.a > 0.0 &&
+        distanceToSurfel < geometryOuterRadius  // FIXME: this leads
+                                                // invisibility of surfel effect
+        && distanceToSurfel > geometryInnerRadius) {
+        fragColor = vec4(
             computeEffect(geometrySurfel,
                           SplatReceiver(vec3(pixelPosition), pixelNormal)) *
                 strength,
             1.0);
-    else
-        colorTexture2DFramebuffer = vec4(0.0);
+        fragColor = vec4(1.0);
+    } else
+        fragColor = vec4(0.0);
 }

@@ -9,7 +9,7 @@
 #include <memory>
 
 #include "Surfel.hpp"
-constexpr int N_SURFELS_MAX = 2000000;
+constexpr int N_SURFELS_MAX = 20000000;
 constexpr int N_PARTITION_LAYERS = 3;
 class DeepScreenSpace {
     // mesh surfelize shader
@@ -21,7 +21,7 @@ class DeepScreenSpace {
     // make use of surfelize result
     loo::ShaderProgram m_splattingshader;
 
-    std::shared_ptr<loo::Texture2DArray> m_splattingresult;
+    std::shared_ptr<loo::Texture2D> m_splattingresult;
 
     // surfel storage
     loo::ShaderStorageBuffer m_surfelssbo;
@@ -67,7 +67,7 @@ class DeepScreenSpace {
     loo::ShaderProgram& prepareSurfelization();
 
     // rendering splatting result with surfelized scene
-    void renderSplatting();
+    void renderSplatting(const loo::Camera& camera);
 
     void surfelVisualization();
 
