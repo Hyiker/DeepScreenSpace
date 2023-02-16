@@ -6,9 +6,11 @@ My personal implementation of https://resources.mpi-inf.mpg.de/DeepScreenSpace/,
 
 This project is managed with `xmake`, you can simply use xmake to build it.
 
+More details about this renderer will be released someday after its completion.
+
 ## Dependency
 
-- glslc - For GLSL code compilation
+- glslc - For GLSL code compilation, part of the general toolkit of SPIR-V
 
 ## Reference
 
@@ -16,4 +18,4 @@ This project is managed with `xmake`, you can simply use xmake to build it.
 
 ## Demo screenshot
 
-![](https://raw.githubusercontent.com/Hyiker/DeepScreenSpace/master/images/buddha_sss.jpg)
+![](https://github.com/Hyiker/DeepScreenSpace/raw/master/images/buddha_sss.jpg)
