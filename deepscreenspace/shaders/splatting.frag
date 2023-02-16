@@ -5,33 +5,34 @@
 #include "include/positionNormal.glsl"
 #include "include/sss.glsl"
 
-layout(location = 0) out vec4 fragColor;
+layout(location = 0) out vec3 fragColor;
 
-layout(location = 41) uniform float strength = 10.0;
+layout(location = 41) uniform float strength;
 
 in Surfel geometrySurfel;
 
-in float geometryInnerRadius;
-in float geometryOuterRadius;
+flat in float geometryInnerRadius;
+flat in float geometryOuterRadius;
+flat in float geometryMaxDistance;
+flat in ivec4 geometrySubBufferBounds;
 
 void main() {
     // Read position and normal of the pixel
+
     const vec3 pixelNormal =
         sampleNormal(gl_FragCoord.xy, gl_Layer) + vec3(0.01, 0.01, 0.01);
     const vec4 pixelPosition = samplePosition(gl_FragCoord.xy, gl_Layer);
     const float distanceToSurfel =
         length(vec3(pixelPosition) - geometrySurfel.position);
 
-    if (pixelPosition.a > 0.0 &&
-        distanceToSurfel < geometryOuterRadius  // FIXME: this leads
-                                                // invisibility of surfel effect
-        && distanceToSurfel > geometryInnerRadius) {
-        fragColor = vec4(
+    if (pixelPosition.a > 0.0 && distanceToSurfel < geometryOuterRadius &&
+        distanceToSurfel > geometryInnerRadius) {
+        // FIXME
+        fragColor =
             computeEffect(geometrySurfel,
                           SplatReceiver(vec3(pixelPosition), pixelNormal)) *
-                strength,
-            1.0);
-        fragColor = vec4(1.0);
-    } else
-        fragColor = vec4(0.0);
+            strength;
+    } else {
+        fragColor = vec3(0.0);
+    }
 }

@@ -79,8 +79,8 @@ void setTessellationLevels(in float level) {
 }
 float radiusFromTessLevel(in float tessLevel, in float area) {
     int i = int(tessLevel);
-    float vi =
-        (i & 1) == 1 ? (3 * sqr(ceil(i / 2.0))) : (0.75 * sqr(i) + 1.5 * i + 1);
+    float vi = (i & 1) == 1 ? (3 * sqr(ceil(tessLevel / 2.0)))
+                            : (0.75 * sqr(tessLevel) + 1.5 * i + 1);
     return sqrt(area / (PI * vi));
 }
 

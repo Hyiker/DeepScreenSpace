@@ -13,6 +13,8 @@
 #include "shaders/splatting.frag.hpp"
 #include "shaders/splatting.geom.hpp"
 #include "shaders/splatting.vert.hpp"
+#include "shaders/splattingUnshuffle.frag.hpp"
+#include "shaders/splattingUnshuffle.vert.hpp"
 #include "shaders/surfelize.tesc.hpp"
 #include "shaders/surfelize.tese.hpp"
 #include "shaders/surfelize.vert.hpp"
@@ -42,19 +44,28 @@ DeepScreenSpace::DeepScreenSpace(int width, int height)
       m_shuffleshader(
           {Shader(POSITIONNORMALSHUFFLER_VERT, ShaderType::Vertex),
            Shader(POSITIONNORMALSHUFFLER_FRAG, ShaderType::Fragment)}),
+      m_unshuffleshader(
+          {Shader(SPLATTINGUNSHUFFLE_VERT, ShaderType::Vertex),
+           Shader(SPLATTINGUNSHUFFLE_FRAG, ShaderType::Fragment)}),
       m_width(width),
       m_height(height) {
     {
         // splatting
         m_splattingfb.init();
         panicPossibleGLError();
-        m_splattingresult = make_shared<Texture2D>();
+        m_splattingresult = make_shared<Texture2DArray>();
         m_splattingresult->init();
-        // TODO modify depth
-        m_splattingresult->setupStorage(width, height, GL_RGBA16F, 1);
+        m_splattingresult->setupStorage(width, height, N_PARTITION_LAYERS,
+                                        GL_RGB16F, 1);
         m_splattingresult->setSizeFilter(GL_LINEAR, GL_LINEAR);
         m_splattingfb.attachTexture(*m_splattingresult, GL_COLOR_ATTACHMENT0,
                                     0);
+
+        m_splattingresultdebug = make_shared<Texture2D>();
+        m_splattingresultdebug->init();
+        m_splattingresultdebug->setupStorage(width, height, GL_RGB16F, 1);
+        m_splattingresultdebug->setSizeFilter(GL_LINEAR, GL_LINEAR);
+
         panicPossibleGLError();
     }
     {
@@ -101,22 +112,35 @@ DeepScreenSpace::DeepScreenSpace(int width, int height)
         m_surfelvisfb.attachRenderbuffer(surfelizerb, GL_DEPTH_ATTACHMENT);
     }
     { initPartition(); }
+    {
+        m_unshufflefb.init();
+        m_unshuffleresult = make_shared<Texture2DArray>();
+        m_unshuffleresult->init();
+        m_unshuffleresult->setupStorage(width, height, N_PARTITION_LAYERS,
+                                        GL_RGB16F, 1);
+        m_unshuffleresult->setSizeFilter(GL_LINEAR, GL_LINEAR);
+        m_unshufflefb.attachTexture(*m_unshuffleresult, GL_COLOR_ATTACHMENT0,
+                                    0);
+        m_unshufflefb.enableAttachments({GL_COLOR_ATTACHMENT0});
+    }
 }
 void DeepScreenSpace::initPartition() {
     m_fbpartitiontex = make_shared<Texture2DArray>();
     m_fbpartitiontex->init();
     m_fbpartitiontex->setupStorage(
-        m_width, m_height, N_PARTITION_LAYERS, GL_RG32I, 1  // no mipmap, plz
+        m_width, m_height, N_PARTITION_LAYERS, GL_RGBA32I, 1  // no mipmap, plz
     );
     m_fbpartitiontex->setSizeFilter(GL_NEAREST, GL_NEAREST);
+
     panicPossibleGLError();
     // the partition indexing only need do once on the cpu-end
-    vector<ivec2> basebuffer(m_width * m_height, ivec2(0)),
-        buffer(m_width * m_height, ivec2(-1));
+    vector<ivec4> basebuffer(m_width * m_height, ivec4(0)),
+        buffer(m_width * m_height, ivec4(-1));
     for (int i = 0; i < basebuffer.size(); i++) {
-        basebuffer[i] = ivec2(i % m_width, i / m_width);
+        basebuffer[i] =
+            ivec4(i % m_width, i / m_width, i % m_width, i / m_width);
     }
-    m_fbpartitiontex->setupLayer(0, basebuffer.data(), GL_RG_INTEGER, GL_INT);
+    m_fbpartitiontex->setupLayer(0, basebuffer.data(), GL_RGBA_INTEGER, GL_INT);
     std::random_device rd;
     std::mt19937 g(rd());
     for (int j = 1, s = 2; j < N_PARTITION_LAYERS; j++, s *= 2) {
@@ -135,11 +159,15 @@ void DeepScreenSpace::initPartition() {
                 int m = shuffleIndex[k];
                 ivec2 buffer_offset(m % s, m / s);
                 ivec2 buffer_pos = buffer_base + buffer_offset;
-                buffer[sub_pos.x + sub_pos.y * m_width] =
+                auto base_pos =
                     basebuffer[buffer_pos.x + buffer_pos.y * m_width];
+                buffer[sub_pos.x + sub_pos.y * m_width].x = base_pos.x;
+                buffer[sub_pos.x + sub_pos.y * m_width].y = base_pos.y;
+                buffer[base_pos.x + base_pos.y * m_width].z = sub_pos.x;
+                buffer[base_pos.x + base_pos.y * m_width].w = sub_pos.y;
             }
         }
-        m_fbpartitiontex->setupLayer(j, buffer.data(), GL_RG_INTEGER, GL_INT);
+        m_fbpartitiontex->setupLayer(j, buffer.data(), GL_RGBA_INTEGER, GL_INT);
     }
     m_partitionfb.init();
     m_partitionednormal = make_shared<Texture2DArray>();
@@ -183,10 +211,24 @@ void DeepScreenSpace::shufflePartition(
     }
 }
 
+void DeepScreenSpace::unshuffleSplattingResult(const loo::Quad& quad) {
+    m_unshufflefb.bind();
+    m_unshuffleshader.use();
+    glClearColor(0, 0, 0, 1);
+    glClear(GL_COLOR_BUFFER_BIT);
+    // unshuffle according to the original shuffle ordering
+    m_unshuffleshader.setTexture(0, *m_fbpartitiontex);
+    m_unshuffleshader.setTexture(1, *m_splattingresult);
+    quad.drawInstances(N_PARTITION_LAYERS);
+    m_unshufflefb.unbind();
+}
+
 void DeepScreenSpace::copySurfelData() {
     glCopyNamedBufferSubData(m_surfelssbo.getId(), m_surfelbuffer.vbo, 0, 0,
                              m_surfelssbo.getSize());
     panicPossibleGLError();
+    // m_surfelssbo.getData(m_surfeldata.get(), 0, sizeof(SurfelData));
+    // LOG(INFO) << m_surfeldata[0].radius;
 }
 int DeepScreenSpace::getSurfelCount() const {
     return (std::min)(m_surfelcounter.getCounter(), GLuint(N_SURFELS_MAX));
@@ -211,10 +253,13 @@ void DeepScreenSpace::surfelVisualization() {
     m_surfelvisfb.unbind();
 }
 
-void DeepScreenSpace::renderSplatting(const loo::Camera& camera) {
+void DeepScreenSpace::renderSplatting(const loo::Camera& camera,
+                                      float splattingStrength) {
     m_splattingfb.bind();
     glClearColor(0, 0, 0, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE);
     m_splattingshader.use();
     if (getSurfelCount()) {
         m_splattingshader.setUniform("cameraPos", camera.getPosition());
@@ -223,12 +268,15 @@ void DeepScreenSpace::renderSplatting(const loo::Camera& camera) {
                                      camera.getProjectionMatrix());
         m_splattingshader.setUniform("framebufferDeviceStep.resolution",
                                      ivec2(m_width, m_height));
+        m_splattingshader.setUniform("strength", splattingStrength);
         m_splattingshader.setUniform("fov", camera.m_fov);
+        m_splattingshader.setTexture(12, *m_partitionedposition);
+        m_splattingshader.setTexture(13, *m_partitionednormal);
         glBindVertexArray(m_surfelbuffer.vao);
-        glDrawArraysInstanced(GL_POINTS, 0, getSurfelCount(),
-                              N_PARTITION_LAYERS);
+        glDrawArrays(GL_POINTS, 0, getSurfelCount());
         logPossibleGLError();
     }
+    glDisable(GL_BLEND);
     m_splattingfb.unbind();
 }
 
@@ -247,4 +295,13 @@ std::shared_ptr<loo::Texture2D> DeepScreenSpace::getPartitionedNormal(
                        GL_TEXTURE_2D, 0, 0, 0, 0, m_width, m_height, 1);
     logPossibleGLError();
     return m_partitionednormaldebug;
+}
+std::shared_ptr<loo::Texture2D> DeepScreenSpace::getSplattingResult(
+    int layer, bool unshuffle) {
+    glCopyImageSubData(
+        unshuffle ? m_unshuffleresult->getId() : m_splattingresult->getId(),
+        GL_TEXTURE_2D_ARRAY, 0, 0, 0, layer, m_splattingresultdebug->getId(),
+        GL_TEXTURE_2D, 0, 0, 0, 0, m_width, m_height, 1);
+    logPossibleGLError();
+    return m_splattingresultdebug;
 }

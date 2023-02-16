@@ -240,6 +240,14 @@ void DSSApplication::gui() {
 
                 ImGui::SliderInt("Partition layer", &m_dss_partitiondebuglayer,
                                  0, N_PARTITION_LAYERS - 1);
+                ImGui::SliderFloat("Surfelize scale", &m_surfelizescale, 1e-5f,
+                                   1e-1f, "%.5f", ImGuiSliderFlags_Logarithmic);
+
+                ImGui::SliderFloat("Splatting strength", &m_splattingstrength,
+                                   1.0f, 1e2f, "%.1f",
+                                   ImGuiSliderFlags_Logarithmic);
+                ImGui::Checkbox("Show unshuffle result",
+                                &m_showunshuffleresult);
                 ImGui::PopItemWidth();
             }
         }
@@ -251,7 +259,8 @@ void DSSApplication::gui() {
         vector<shared_ptr<Texture2D>> textures{
             m_scenetexture, m_dss.getSurfelVisualizationResult(),
             m_dss.getPartitionedNormal(m_dss_partitiondebuglayer),
-            m_dss.getSplattingResult()};
+            m_dss.getSplattingResult(m_dss_partitiondebuglayer,
+                                     m_showunshuffleresult)};
         ImGui::SetNextWindowSize(ImVec2(w_img * textures.size() + 40, h_img));
         ImGui::SetNextWindowPos(ImVec2(0, h * 0.8), ImGuiCond_Always);
         if (ImGui::Begin("Textures", nullptr,
@@ -331,7 +340,7 @@ void DSSApplication::deepScreenSpace() {
         auto& surfelizeShader = m_dss.prepareSurfelization();
         surfelizeShader.use();
         surfelizeShader.setUniform("aspect", m_maincam.m_aspect);
-        surfelizeShader.setUniform("scale", 1e-3f);
+        surfelizeShader.setUniform("scale", m_surfelizescale);
         surfelizeShader.setUniform("viewMatrix", m_maincam.getViewMatrix());
         surfelizeShader.setUniform("fov", m_maincam.m_fov);
         surfelizeShader.setUniform("cameraPosition", m_maincam.getPosition());
@@ -347,7 +356,8 @@ void DSSApplication::deepScreenSpace() {
     }
     m_dss.copySurfelData();
     { m_dss.surfelVisualization(); }
-    { m_dss.renderSplatting(m_maincam); }
+    { m_dss.renderSplatting(m_maincam, m_splattingstrength); }
+    { m_dss.unshuffleSplattingResult(*m_globalquad); }
 }
 void DSSApplication::clear() {
     glClearColor(0.f, 0.f, 0.f, 0.0f);

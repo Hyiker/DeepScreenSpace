@@ -21,5 +21,5 @@ void main() {
     vNormal = normalize(aNormal);
     vRadius = aRadius;
     gl_Position = projection * view * vec4(vPos, 1);
-    gl_PointSize = 4.0;
+    gl_PointSize = 2.0;
 }

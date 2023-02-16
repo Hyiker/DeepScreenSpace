@@ -11,10 +11,10 @@ struct SplatReceiver {
     vec3 normal;
 };
 
-layout(location = 80) uniform float eta = 1.5;
-layout(location = 81) uniform float clampDistance = 10.0;
+layout(location = 80) uniform float eta = 1.3;
+layout(location = 81) uniform float clampDistance = 1e-6;
 layout(location = 82) uniform sampler2DArray coefficientTexture2DArray;
-layout(location = 83) uniform float sizeFactor = 5.0;
+layout(location = 83) uniform float sizeFactor = 1.0;
 
 vec3 computeIrradiance(in vec3 position, in vec3 normal) {
     vec3 irradiance = vec3(0.0);
@@ -50,8 +50,8 @@ Surfel initSurfel(vec3 position, vec3 normal, float radius
     // vec3 sigma_s_prime = texelFetch(coefficientTexture2DArray,
     //                                 ivec3(0, 0, materialId * 2 + 1), 0)
     //                          .rgb;
-    vec3 sigma_a = vec3(0.1);
-    vec3 sigma_s_prime = vec3(0.001);
+    vec3 sigma_a = vec3(0.002) * 1e3;
+    vec3 sigma_s_prime = vec3(2.1) * 1e3;
     return Surfel(position, normal, radius, computeIrradiance(position, normal),
                   sigma_a, sigma_s_prime);
 }

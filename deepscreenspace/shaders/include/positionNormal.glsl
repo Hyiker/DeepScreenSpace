@@ -3,8 +3,8 @@
 
 // Buffers for positions and normals of world space points associated to the
 // image pixels
-uniform sampler2DArray positionTexture;
-uniform sampler2DArray normalTexture;
+layout(location = 28, binding = 12) uniform sampler2DArray positionTexture;
+layout(location = 29, binding = 13) uniform sampler2DArray normalTexture;
 
 // Helper functions to sample the individual deferred buffers
 vec4 sampleBuffer(const in sampler2DArray s, const in vec2 texCoord,

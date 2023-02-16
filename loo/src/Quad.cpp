@@ -28,6 +28,12 @@ void Quad::draw() const {
     glBindVertexArray(0);
 }
 
+void Quad::drawInstances(int count) const {
+    glBindVertexArray(vao);
+    glDrawArraysInstanced(GL_TRIANGLES, 0, 6, count);
+    glBindVertexArray(0);
+}
+
 Quad::~Quad() {
     glDeleteBuffers(1, &vbo);
     glDeleteVertexArrays(1, &vao);

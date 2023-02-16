@@ -13,6 +13,7 @@ class LOO_EXPORT Quad {
    public:
     Quad();
     void draw() const;
+    void drawInstances(int count) const;
     ~Quad();
 };
 

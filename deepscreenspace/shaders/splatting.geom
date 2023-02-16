@@ -1,8 +1,10 @@
 #version 460 core
 #extension GL_GOOGLE_include_directive : enable
+#extension GL_ARB_draw_instanced : enable
 #include "include/dss.glsl"
 #include "include/math.glsl"
 #include "include/sss.glsl"
+layout(invocations = 4) in;
 layout(points) in;
 layout(points, max_vertices = 1) out;
 
@@ -14,7 +16,7 @@ flat out float geometryOuterRadius;
 flat out float geometryMaxDistance;
 flat out ivec4 geometrySubBufferBounds;
 
-layout(location = 30) uniform float minimalEffect = 1e-2;
+layout(location = 30) uniform float minimalEffect = 0.01;
 layout(location = 31) uniform float maxDistance = 100.0;
 layout(location = 32) uniform vec3 cameraPos;
 layout(location = 33) uniform mat4 viewMatrix;
@@ -156,8 +158,7 @@ void main() {
               (subBufferCoord + ivec2(1)) * subBufferResolution);
 
     // Adjust scaling and translation vectors for the chosen sub-buffer
-    vec4 mipScale = vec4(1.0);
-    vec4 mipTranslate = vec4(0.0);
+    vec4 mipScale, mipTranslate;
     useSubBuffer(gl_InvocationID, subBufferCoord, mipScale, mipTranslate);
 
     // Draw the splat
