@@ -15,6 +15,8 @@
 #include "shaders/splatting.vert.hpp"
 #include "shaders/splattingUnshuffle.frag.hpp"
 #include "shaders/splattingUnshuffle.vert.hpp"
+#include "shaders/sumUp.frag.hpp"
+#include "shaders/sumUp.vert.hpp"
 #include "shaders/surfelize.tesc.hpp"
 #include "shaders/surfelize.tese.hpp"
 #include "shaders/surfelize.vert.hpp"
@@ -47,6 +49,8 @@ DeepScreenSpace::DeepScreenSpace(int width, int height)
       m_unshuffleshader(
           {Shader(SPLATTINGUNSHUFFLE_VERT, ShaderType::Vertex),
            Shader(SPLATTINGUNSHUFFLE_FRAG, ShaderType::Fragment)}),
+      m_sumupshader({Shader(SUMUP_VERT, ShaderType::Vertex),
+                     Shader(SUMUP_FRAG, ShaderType::Fragment)}),
       m_width(width),
       m_height(height) {
     {
@@ -60,11 +64,23 @@ DeepScreenSpace::DeepScreenSpace(int width, int height)
         m_splattingresult->setSizeFilter(GL_LINEAR, GL_LINEAR);
         m_splattingfb.attachTexture(*m_splattingresult, GL_COLOR_ATTACHMENT0,
                                     0);
+        for (int i = 0; i < 2; i++) {
+            m_unshufflepingpong[i] = make_shared<Texture2DArray>();
+            m_unshufflepingpong[i]->init();
+            m_unshufflepingpong[i]->setupStorage(
+                width, height, N_PARTITION_LAYERS, GL_RGB16F, 1);
+            m_unshufflepingpong[i]->setSizeFilter(GL_LINEAR, GL_LINEAR);
+        }
 
         m_splattingresultdebug = make_shared<Texture2D>();
         m_splattingresultdebug->init();
         m_splattingresultdebug->setupStorage(width, height, GL_RGB16F, 1);
         m_splattingresultdebug->setSizeFilter(GL_LINEAR, GL_LINEAR);
+
+        m_blurresultdebug = make_shared<Texture2D>();
+        m_blurresultdebug->init();
+        m_blurresultdebug->setupStorage(width, height, GL_RGB16F, 1);
+        m_blurresultdebug->setSizeFilter(GL_LINEAR, GL_LINEAR);
 
         panicPossibleGLError();
     }
@@ -123,7 +139,23 @@ DeepScreenSpace::DeepScreenSpace(int width, int height)
                                     0);
         m_unshufflefb.enableAttachments({GL_COLOR_ATTACHMENT0});
     }
+    { m_blurer.init(m_unshufflepingpong[0], m_unshufflepingpong[1]); }
+    {
+        m_sumupfb.init();
+        m_sumuptex = make_shared<Texture2D>();
+        m_sumuptex->init();
+        m_sumuptex->setupStorage(width, height, GL_RGB16F, 1);
+        m_sumuptex->setSizeFilter(GL_LINEAR, GL_LINEAR);
+        m_sumupfb.attachTexture(*m_sumuptex, GL_COLOR_ATTACHMENT0, 0);
+        m_sumupfb.enableAttachments({GL_COLOR_ATTACHMENT0});
+    }
 }
+void DeepScreenSpace::copyFromUnshuffleToBlur() {
+    glCopyImageSubData(m_unshuffleresult->getId(), GL_TEXTURE_2D_ARRAY, 0, 0, 0,
+                       0, m_unshufflepingpong[0]->getId(), GL_TEXTURE_2D_ARRAY,
+                       0, 0, 0, 0, m_width, m_height, N_PARTITION_LAYERS);
+}
+
 void DeepScreenSpace::initPartition() {
     m_fbpartitiontex = make_shared<Texture2DArray>();
     m_fbpartitiontex->init();
@@ -211,18 +243,6 @@ void DeepScreenSpace::shufflePartition(
     }
 }
 
-void DeepScreenSpace::unshuffleSplattingResult(const loo::Quad& quad) {
-    m_unshufflefb.bind();
-    m_unshuffleshader.use();
-    glClearColor(0, 0, 0, 1);
-    glClear(GL_COLOR_BUFFER_BIT);
-    // unshuffle according to the original shuffle ordering
-    m_unshuffleshader.setTexture(0, *m_fbpartitiontex);
-    m_unshuffleshader.setTexture(1, *m_splattingresult);
-    quad.drawInstances(N_PARTITION_LAYERS);
-    m_unshufflefb.unbind();
-}
-
 void DeepScreenSpace::copySurfelData() {
     glCopyNamedBufferSubData(m_surfelssbo.getId(), m_surfelbuffer.vbo, 0, 0,
                              m_surfelssbo.getSize());
@@ -280,6 +300,35 @@ void DeepScreenSpace::renderSplatting(const loo::Camera& camera,
     m_splattingfb.unbind();
 }
 
+void DeepScreenSpace::unshuffleSplattingResult(const loo::Quad& quad) {
+    m_unshufflefb.bind();
+    m_unshuffleshader.use();
+    glClearColor(0, 0, 0, 1);
+    glClear(GL_COLOR_BUFFER_BIT);
+    // unshuffle according to the original shuffle ordering
+    m_unshuffleshader.setTexture(0, *m_fbpartitiontex);
+    m_unshuffleshader.setTexture(1, *m_splattingresult);
+    quad.drawInstances(N_PARTITION_LAYERS);
+    m_unshufflefb.unbind();
+}
+void DeepScreenSpace::blurUnshuffleResult(const loo::Quad& quad) {
+    copyFromUnshuffleToBlur();
+    m_blurer.blur(quad, N_PARTITION_LAYERS, GaussianBlurDirection::X);
+    m_blurer.blur(quad, N_PARTITION_LAYERS, GaussianBlurDirection::Y);
+}
+
+void DeepScreenSpace::sumUp(const loo::Quad& quad) {
+    m_sumupfb.bind();
+    m_sumupshader.use();
+    glClearColor(0, 0, 0, 0);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE);
+    m_sumupshader.setTexture(0, *m_blurer.getBlurResult());
+    quad.drawInstances(N_PARTITION_LAYERS);
+    glDisable(GL_BLEND);
+}
+
 std::shared_ptr<loo::Texture2D> DeepScreenSpace::getPartitionedPosition(
     int layer) {
     glCopyImageSubData(m_partitionedposition->getId(), GL_TEXTURE_2D_ARRAY, 0,
@@ -304,4 +353,12 @@ std::shared_ptr<loo::Texture2D> DeepScreenSpace::getSplattingResult(
         GL_TEXTURE_2D, 0, 0, 0, 0, m_width, m_height, 1);
     logPossibleGLError();
     return m_splattingresultdebug;
+}
+
+std::shared_ptr<loo::Texture2D> DeepScreenSpace::getBlurResult(int layer) {
+    glCopyImageSubData(m_blurer.getBlurResult()->getId(), GL_TEXTURE_2D_ARRAY,
+                       0, 0, 0, layer, m_blurresultdebug->getId(),
+                       GL_TEXTURE_2D, 0, 0, 0, 0, m_width, m_height, 1);
+    logPossibleGLError();
+    return m_blurresultdebug;
 }

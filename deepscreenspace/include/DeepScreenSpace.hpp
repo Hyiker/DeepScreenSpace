@@ -8,7 +8,9 @@
 #include <loo/Texture.hpp>
 #include <memory>
 
+#include "GaussianBlur.hpp"
 #include "Surfel.hpp"
+
 constexpr int N_SURFELS_MAX = 20000000;
 constexpr int N_PARTITION_LAYERS = 4;
 class DeepScreenSpace {
@@ -23,8 +25,11 @@ class DeepScreenSpace {
 
     std::shared_ptr<loo::Texture2DArray> m_splattingresult;
     // unshuffle the splatting result
-    std::shared_ptr<loo::Texture2DArray> m_unshuffleresult;
-    std::shared_ptr<loo::Texture2D> m_splattingresultdebug;
+    std::shared_ptr<loo::Texture2DArray> m_unshuffleresult,
+        // use additional pingpong only for debug
+        // not necessary, could be reduced to 1
+        m_unshufflepingpong[2];
+    std::shared_ptr<loo::Texture2D> m_splattingresultdebug, m_blurresultdebug;
 
     // surfel storage
     loo::ShaderStorageBuffer m_surfelssbo;
@@ -56,7 +61,17 @@ class DeepScreenSpace {
     loo::Framebuffer m_partitionfb, m_unshufflefb;
     loo::ShaderProgram m_shuffleshader;
     loo::ShaderProgram m_unshuffleshader;
+
+    GaussianBlur m_blurer;
+
+    // sum up to get the final output
+    loo::Framebuffer m_sumupfb;
+    loo::ShaderProgram m_sumupshader;
+    std::shared_ptr<loo::Texture2D> m_sumuptex;
+
     int m_width, m_height;
+
+    void copyFromUnshuffleToBlur();
 
    public:
     DeepScreenSpace(int width, int height);
@@ -68,8 +83,6 @@ class DeepScreenSpace {
         std::shared_ptr<loo::Texture2D> originalNormalTexture,
         std::shared_ptr<loo::Texture2D> originalPositionTexture);
 
-    void unshuffleSplattingResult(const loo::Quad& quad);
-
     int getSurfelCount() const;
     // prepare surfelization shader
     // no framebuffer is needed in this pass
@@ -77,6 +90,12 @@ class DeepScreenSpace {
 
     // rendering splatting result with surfelized scene
     void renderSplatting(const loo::Camera& camera, float splattingStrength);
+    // unshuffle the ouput
+    void unshuffleSplattingResult(const loo::Quad& quad);
+    // blur the output
+    void blurUnshuffleResult(const loo::Quad& quad);
+    // sum up to get the final texture
+    void sumUp(const loo::Quad& quad);
 
     void surfelVisualization();
 
@@ -91,6 +110,8 @@ class DeepScreenSpace {
     std::shared_ptr<loo::Texture2D> getPartitionedNormal(int layer);
     std::shared_ptr<loo::Texture2D> getSplattingResult(int layer,
                                                        bool unshuffle = false);
+    std::shared_ptr<loo::Texture2D> getBlurResult(int layer);
+    auto getSumUpResult() { return m_sumuptex; }
 };
 
 #endif /* DEEPSCREENSPACE_INCLUDE_DEEP_SCREEN_SPACE_HPP */

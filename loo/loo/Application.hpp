@@ -30,7 +30,8 @@ namespace loo {
 
 class LOO_EXPORT Application {
    public:
-    Application(int width = 640, int height = 480);
+    Application(int width = 640, int height = 480,
+                const std::string& title = "Application");
 
     // get the window id
     GLFWwindow* getWindow() const;

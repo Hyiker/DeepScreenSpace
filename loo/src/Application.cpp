@@ -23,8 +23,8 @@ namespace loo {
 
 using namespace std;
 
-Application::Application(int width, int height)
-    : state(stateReady), width(width), height(height), title("Application") {
+Application::Application(int width, int height, const std::string& title)
+    : state(stateReady), width(width), height(height), title(title) {
     initGLFW();
     // glad load
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {

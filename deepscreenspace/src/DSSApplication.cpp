@@ -78,7 +78,7 @@ void DSSApplication::loadGLTF(const std::string& filename, float scaling) {
 }
 
 DSSApplication::DSSApplication(int width, int height, const char* skyBoxPrefix)
-    : Application(width, height),
+    : Application(width, height, "Deep screen space"),
       m_baseshader{Shader(BASE_VERT, ShaderType::Vertex),
                    Shader(BASE_FRAG, ShaderType::Fragment)},
       m_skyboxshader{Shader(SKYBOX_VERT, ShaderType::Vertex),
@@ -248,6 +248,7 @@ void DSSApplication::gui() {
                                    ImGuiSliderFlags_Logarithmic);
                 ImGui::Checkbox("Show unshuffle result",
                                 &m_showunshuffleresult);
+                ImGui::Checkbox("Apply subsurface scattering", &m_applysss);
                 ImGui::PopItemWidth();
             }
         }
@@ -257,10 +258,13 @@ void DSSApplication::gui() {
               w_img = h_img / io.DisplaySize.y * io.DisplaySize.x;
         ImGui::SetNextWindowBgAlpha(1.0f);
         vector<shared_ptr<Texture2D>> textures{
-            m_scenetexture, m_dss.getSurfelVisualizationResult(),
-            m_dss.getPartitionedNormal(m_dss_partitiondebuglayer),
+            // m_scenetexture,
+            m_dss.getSurfelVisualizationResult(),
+            // m_dss.getPartitionedNormal(m_dss_partitiondebuglayer),
             m_dss.getSplattingResult(m_dss_partitiondebuglayer,
-                                     m_showunshuffleresult)};
+                                     m_showunshuffleresult),
+            m_dss.getBlurResult(m_dss_partitiondebuglayer),
+            m_dss.getSumUpResult()};
         ImGui::SetNextWindowSize(ImVec2(w_img * textures.size() + 40, h_img));
         ImGui::SetNextWindowPos(ImVec2(0, h * 0.8), ImGuiCond_Always);
         if (ImGui::Begin("Textures", nullptr,
@@ -275,7 +279,10 @@ void DSSApplication::gui() {
 }
 
 void DSSApplication::finalprocess() {
-    m_finalprocess.render(*m_scenetexture, m_lodvisualize);
+    m_finalprocess.render(
+        *m_scenetexture,
+        m_applysss ? *m_dss.getSumUpResult() : Texture2D::getBlackTexture(),
+        m_lodvisualize);
 }
 void DSSApplication::skybox() {
     if (m_skyboxtex) {
@@ -311,6 +318,7 @@ void DSSApplication::scene() {
     m_baseshader.setUniform("enableNormal", m_enablenormal);
     m_baseshader.setUniform("enableParallax", m_enableparallax);
     m_baseshader.setUniform("enableLodVisualize", (int)m_lodvisualize);
+    m_baseshader.setUniform("applySSS", m_applysss);
     logPossibleGLError();
 
     m_scene.draw(
@@ -358,6 +366,8 @@ void DSSApplication::deepScreenSpace() {
     { m_dss.surfelVisualization(); }
     { m_dss.renderSplatting(m_maincam, m_splattingstrength); }
     { m_dss.unshuffleSplattingResult(*m_globalquad); }
+    { m_dss.blurUnshuffleResult(*m_globalquad); }
+    { m_dss.sumUp(*m_globalquad); }
 }
 void DSSApplication::clear() {
     glClearColor(0.f, 0.f, 0.f, 0.0f);

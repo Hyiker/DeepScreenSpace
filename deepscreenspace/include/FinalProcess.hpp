@@ -15,7 +15,9 @@ class FinalProcess {
     void init();
     // if use direct output, this pass will just out put the previous rendering
     // result without doing any addition postprocessing
-    void render(const loo::Texture2D& screenTexture, bool directOutput = false);
+    void render(const loo::Texture2D& screenTexture,
+                const loo::Texture2D& subsurfaceScattering,
+                bool directOutput = false);
 };
 
 #endif /* DEEPSCREENSPACE_INCLUDE_FINAL_PROCESS_HPP */

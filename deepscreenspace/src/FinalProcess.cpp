@@ -16,6 +16,7 @@ FinalProcess::FinalProcess(int width, int height,
 }
 void FinalProcess::init() { panicPossibleGLError(); }
 void FinalProcess::render(const loo::Texture2D& screenTexture,
+                          const loo::Texture2D& subsurfaceScattering,
                           bool directOutput) {
     Framebuffer::bindDefault();
     glClearColor(0, 0, 0, 1);
@@ -26,6 +27,7 @@ void FinalProcess::render(const loo::Texture2D& screenTexture,
     m_shader.use();
     m_shader.setUniform("directOutput", directOutput);
     m_shader.setTexture(0, screenTexture);
+    m_shader.setTexture(1, subsurfaceScattering);
 
     m_quad->draw();
 

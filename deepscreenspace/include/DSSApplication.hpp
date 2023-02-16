@@ -61,7 +61,7 @@ class DSSApplication : public loo::Application {
 
     // scene surfelize
     loo::Framebuffer m_surfelizefb;
-    float m_surfelizescale{0.002f}, m_splattingstrength{20.f};
+    float m_surfelizescale{0.00085f}, m_splattingstrength{4.5f};
 
     // screen quad
     std::shared_ptr<loo::Quad> m_globalquad;
@@ -78,6 +78,7 @@ class DSSApplication : public loo::Application {
     bool m_enableparallax{true};
     bool m_lodvisualize{false};
     bool m_showunshuffleresult{true};
+    bool m_applysss{true};
     // float m_displaceintensity{};
 };
 

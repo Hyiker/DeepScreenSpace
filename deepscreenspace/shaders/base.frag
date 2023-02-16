@@ -21,6 +21,7 @@ layout(location = 18) uniform bool enableNormal;
 layout(location = 19) uniform bool enableParallax;
 layout(location = 20) uniform bool enableLodVisualize;
 layout(location = 21) uniform int meshLod;
+layout(location = 22) uniform bool applySSS;
 const float ambientIntensity = 0.2f;
 
 vec2 parallaxMapping(vec2 texCoord, vec3 viewTS) {
@@ -77,12 +78,15 @@ void main() {
                 continue;
         }
         float attenuation = light.intensity / (distance * distance);
-        vec3 Ld = texture(diffuseTex, texCoord).rgb *
-                  simpleMaterial.diffuse.rgb * attenuation *
-                  max(dot(L, sNormal), 0.0);
-        vec3 Ls = texture(specularTex, texCoord).rgb *
-                  simpleMaterial.specular.rgb * attenuation *
-                  pow(max(0.0, dot(H, sNormal)), simpleMaterial.shininess);
+
+        vec3 Ld = applySSS ? vec3(0.0)
+                           : (texture(diffuseTex, texCoord).rgb *
+                              simpleMaterial.diffuse.rgb * attenuation *
+                              max(dot(L, sNormal), 0.0));
+        vec3 Ls = max(vec3(0.0), texture(specularTex, texCoord).rgb *
+                                     simpleMaterial.specular.rgb * attenuation *
+                                     pow(max(0.0, dot(H, sNormal)),
+                                         simpleMaterial.shininess));
         color += light.color.rgb * (Ld + Ls);
     }
     vec3 La = texture(ambientTex, texCoord).rgb * simpleMaterial.ambient.rgb *
